@@ -1,0 +1,4778 @@
+{
+  "datasets": [
+    {
+      "name": "6e451adb",
+      "displayName": "ds_executive_kpis",
+      "queryLines": [
+        "WITH iz AS (\n",
+        "  SELECT\n",
+        "    COUNT(*) AS total_iz_visits,\n",
+        "    SUM(is_fully_immunized) AS fully_immunized,\n",
+        "    ROUND(100.0 * SUM(is_fully_immunized) / NULLIF(COUNT(*), 0), 1) AS immunization_coverage_pct,\n",
+        "    SUM(penta1) AS penta1_total,\n",
+        "    SUM(penta3) AS penta3_total,\n",
+        "    ROUND(100.0 * SUM(penta3) / NULLIF(COUNT(*), 0), 1) AS penta3_coverage_pct,\n",
+        "    ROUND(100.0 * (SUM(penta1) - SUM(penta3)) / NULLIF(SUM(penta1), 0), 1) AS penta_dropout_pct,\n",
+        "    SUM(is_defaulter) AS iz_defaulters\n",
+        "  FROM\n",
+        "    community_health_intelligence.gold.fact_immunization\n",
+        "),\n",
+        "preg AS (\n",
+        "  SELECT\n",
+        "    COUNT(*) AS total_pregnancies,\n",
+        "    SUM(anc_complete) AS anc_4plus_count,\n",
+        "    ROUND(100.0 * SUM(anc_complete) / NULLIF(COUNT(*), 0), 1) AS anc_4plus_pct,\n",
+        "    SUM(is_anc_defaulter) AS anc_defaulters,\n",
+        "    ROUND(100.0 * SUM(is_anc_defaulter) / NULLIF(COUNT(*), 0), 1) AS anc_defaulter_pct,\n",
+        "    SUM(has_danger_signs) AS danger_sign_cases\n",
+        "  FROM\n",
+        "    community_health_intelligence.gold.fact_pregnancy\n",
+        "),\n",
+        "pnc AS (\n",
+        "  SELECT\n",
+        "    COUNT(*) AS total_pnc_visits,\n",
+        "    SUM(pnc_upto_date) AS pnc_upto_date,\n",
+        "    ROUND(100.0 * SUM(pnc_upto_date) / NULLIF(COUNT(*), 0), 1) AS pnc_coverage_pct,\n",
+        "    SUM(is_maternal_death) AS maternal_deaths\n",
+        "  FROM\n",
+        "    community_health_intelligence.gold.fact_pnc\n",
+        "),\n",
+        "fp AS (\n",
+        "  SELECT\n",
+        "    COUNT(DISTINCT patient_id) AS fp_clients,\n",
+        "    SUM(is_on_fp) AS on_fp,\n",
+        "    SUM(refilled_today) AS fp_refills\n",
+        "  FROM\n",
+        "    community_health_intelligence.gold.fact_family_planning\n",
+        "),\n",
+        "pop AS (\n",
+        "  SELECT\n",
+        "    SUM(u2_pop) AS total_u2_pop,\n",
+        "    SUM(u5_pop) AS total_u5_pop,\n",
+        "    SUM(wra_pop) AS total_wra_pop\n",
+        "  FROM\n",
+        "    community_health_intelligence.gold.fact_population\n",
+        "),\n",
+        "chw AS (\n",
+        "  SELECT\n",
+        "    COUNT(DISTINCT chw_uuid) AS active_chws\n",
+        "  FROM\n",
+        "    community_health_intelligence.gold.dim_chw\n",
+        "),\n",
+        "hv AS (\n",
+        "  SELECT\n",
+        "    SUM(visit_count) AS total_home_visits,\n",
+        "    COUNT(DISTINCT family_id) AS households_visited\n",
+        "  FROM\n",
+        "    community_health_intelligence.gold.fact_home_visit\n",
+        "),\n",
+        "sup AS (\n",
+        "  SELECT\n",
+        "    ROUND(AVG(overall_score_pct), 1) AS avg_supervision_score,\n",
+        "    SUM(\n",
+        "      CASE\n",
+        "        WHEN overall_score_pct >= 80 THEN 1\n",
+        "        ELSE 0\n",
+        "      END\n",
+        "    ) AS high_performers,\n",
+        "    SUM(\n",
+        "      CASE\n",
+        "        WHEN overall_score_pct < 40 THEN 1\n",
+        "        ELSE 0\n",
+        "      END\n",
+        "    ) AS needs_support\n",
+        "  FROM\n",
+        "    community_health_intelligence.gold.fact_supervision\n",
+        "  WHERE\n",
+        "    overall_score_pct IS NOT NULL\n",
+        ")\n",
+        "SELECT\n",
+        "  iz.total_iz_visits,\n",
+        "  iz.fully_immunized,\n",
+        "  iz.immunization_coverage_pct,\n",
+        "  iz.penta1_total,\n",
+        "  iz.penta3_total,\n",
+        "  iz.penta3_coverage_pct,\n",
+        "  iz.penta_dropout_pct,\n",
+        "  iz.iz_defaulters,\n",
+        "  preg.total_pregnancies,\n",
+        "  preg.anc_4plus_count,\n",
+        "  preg.anc_4plus_pct,\n",
+        "  preg.anc_defaulters,\n",
+        "  preg.anc_defaulter_pct,\n",
+        "  preg.danger_sign_cases,\n",
+        "  pnc.total_pnc_visits,\n",
+        "  pnc.pnc_upto_date,\n",
+        "  pnc.pnc_coverage_pct,\n",
+        "  pnc.maternal_deaths,\n",
+        "  fp.fp_clients,\n",
+        "  fp.on_fp,\n",
+        "  ROUND(100.0 * fp.on_fp / NULLIF(pop.total_wra_pop, 0), 1) AS mcpr_pct,\n",
+        "  fp.fp_refills,\n",
+        "  chw.active_chws,\n",
+        "  pop.total_u2_pop,\n",
+        "  pop.total_u5_pop,\n",
+        "  pop.total_wra_pop,\n",
+        "  hv.total_home_visits,\n",
+        "  hv.households_visited,\n",
+        "  sup.avg_supervision_score,\n",
+        "  sup.high_performers,\n",
+        "  sup.needs_support\n",
+        "FROM\n",
+        "  iz,\n",
+        "  preg,\n",
+        "  pnc,\n",
+        "  fp,\n",
+        "  pop,\n",
+        "  chw,\n",
+        "  hv,\n",
+        "  sup"
+      ],
+      "columns": [
+        {
+          "displayName": "penta3_coverage_rate",
+          "description": "Penta3 immunization coverage as % of total children tracked",
+          "expression": "ROUND(100.0 * SUM(`penta3_total`) / NULLIF(SUM(`total_iz_visits`), 0), 1)"
+        }
+      ]
+    },
+    {
+      "name": "26dac079",
+      "displayName": "ds_monthly_trends",
+      "queryLines": [
+        "SELECT\n",
+        "  reportedm,\n",
+        "  county_clean,\n",
+        "  sub_county_clean,\n",
+        "  COUNT(*) AS registrations,\n",
+        "  SUM(anc_complete) AS anc4_count,\n",
+        "  SUM(is_anc_defaulter) AS defaulter_count,\n",
+        "  ROUND(100.0 * SUM(anc_complete) / NULLIF(COUNT(*), 0), 1) AS anc4_pct,\n",
+        "  ROUND(100.0 * SUM(is_anc_defaulter) / NULLIF(COUNT(*), 0), 1) AS defaulter_pct\n",
+        "FROM\n",
+        "  community_health_intelligence.gold.fact_pregnancy\n",
+        "WHERE\n",
+        "  county_clean IS NOT NULL\n",
+        "  AND county_clean != ''\n",
+        "GROUP BY\n",
+        "  reportedm,\n",
+        "  county_clean,\n",
+        "  sub_county_clean\n",
+        "ORDER BY\n",
+        "  reportedm"
+      ]
+    },
+    {
+      "name": "6825e9ca",
+      "displayName": "ds_subcounty_comparison",
+      "queryLines": [
+        "-- Dataset: ds_subcounty_comparison (fixed population join)\r\n",
+        "SELECT\r\n",
+        "  c.sub_county_name,\r\n",
+        "  c.county_name,\r\n",
+        "  COUNT(DISTINCT c.chw_uuid)                                      AS chw_count,\r\n",
+        "  COALESCE(SUM(iz.iz_visits), 0)                                  AS iz_visits,\r\n",
+        "  COALESCE(SUM(iz.fully_immunized), 0)                            AS fully_immunized,\r\n",
+        "  ROUND(100.0 * COALESCE(SUM(iz.fully_immunized), 0)\r\n",
+        "    / NULLIF(COALESCE(SUM(iz.iz_visits), 0), 0), 1)               AS iz_coverage_pct,\r\n",
+        "  COALESCE(SUM(pop.chw_u5), 0)                                    AS u5_pop,\r\n",
+        "  COALESCE(SUM(pop.chw_wra), 0)                                   AS wra_pop,\r\n",
+        "  COALESCE(SUM(pop.chw_u5), 0) - COALESCE(SUM(iz.iz_visits), 0)  AS iz_gap,\r\n",
+        "  COALESCE(SUM(fp.on_fp), 0)                                      AS fp_clients_on_fp,\r\n",
+        "  ROUND(100.0 * COALESCE(SUM(fp.on_fp), 0)\r\n",
+        "    / NULLIF(COALESCE(SUM(pop.chw_wra), 0), 0), 1)                AS mcpr_pct\r\n",
+        "FROM community_health_intelligence.gold.dim_chw c\r\n",
+        "LEFT JOIN (\r\n",
+        "  SELECT chw_uuid,\r\n",
+        "    COUNT(*)             AS iz_visits,\r\n",
+        "    SUM(is_fully_immunized) AS fully_immunized\r\n",
+        "  FROM community_health_intelligence.gold.fact_immunization\r\n",
+        "  GROUP BY chw_uuid\r\n",
+        ") iz ON c.chw_uuid = iz.chw_uuid\r\n",
+        "LEFT JOIN (\r\n",
+        "  SELECT chw_uuid,\r\n",
+        "    SUM(u5_pop)  AS chw_u5,\r\n",
+        "    SUM(wra_pop) AS chw_wra\r\n",
+        "  FROM community_health_intelligence.gold.fact_population\r\n",
+        "  GROUP BY chw_uuid\r\n",
+        ") pop ON c.chw_uuid = pop.chw_uuid\r\n",
+        "LEFT JOIN (\r\n",
+        "  SELECT chw_uuid, SUM(is_on_fp) AS on_fp\r\n",
+        "  FROM community_health_intelligence.gold.fact_family_planning\r\n",
+        "  GROUP BY chw_uuid\r\n",
+        ") fp ON c.chw_uuid = fp.chw_uuid\r\n",
+        "WHERE c.sub_county_name IS NOT NULL\r\n",
+        "  AND c.sub_county_name != ''\r\n",
+        "GROUP BY c.sub_county_name, c.county_name\r\n",
+        "ORDER BY iz_coverage_pct DESC"
+      ],
+      "columns": [
+        {
+          "displayName": "Coverage Status",
+          "description": "On Track >= 40%, At Risk 20-40%, Critical < 20%",
+          "expression": "CASE WHEN `iz_coverage_pct` >= 40 THEN 'On Track' WHEN `iz_coverage_pct` >= 20 THEN 'At Risk' ELSE 'Critical' END"
+        }
+      ]
+    },
+    {
+      "name": "218df05b",
+      "displayName": "ds_maternal_funnel",
+      "queryLines": [
+        "-- Dataset: ds_maternal_funnel\r\n",
+        "SELECT\r\n",
+        "  county_clean,\r\n",
+        "  COUNT(*)                                                          AS total_registered,\r\n",
+        "  SUM(stage_2_anc1)                                                 AS reached_anc1,\r\n",
+        "  SUM(stage_3_anc2)                                                 AS reached_anc2,\r\n",
+        "  SUM(stage_4_anc3)                                                 AS reached_anc3,\r\n",
+        "  SUM(stage_5_anc4)                                                 AS reached_anc4_plus,\r\n",
+        "  SUM(stage_6_delivery)                                             AS reached_delivery,\r\n",
+        "  SUM(stage_7_pnc)                                                  AS reached_pnc,\r\n",
+        "  SUM(stage_8_fp)                                                   AS reached_fp_postpartum,\r\n",
+        "  -- Conversion rates\r\n",
+        "  ROUND(100.0*SUM(stage_2_anc1)/NULLIF(COUNT(*),0),1)              AS pct_anc1,\r\n",
+        "  ROUND(100.0*SUM(stage_3_anc2)/NULLIF(COUNT(*),0),1)              AS pct_anc2,\r\n",
+        "  ROUND(100.0*SUM(stage_4_anc3)/NULLIF(COUNT(*),0),1)              AS pct_anc3,\r\n",
+        "  ROUND(100.0*SUM(stage_5_anc4)/NULLIF(COUNT(*),0),1)              AS pct_anc4_complete,\r\n",
+        "  ROUND(100.0*SUM(stage_6_delivery)/NULLIF(COUNT(*),0),1)          AS pct_delivery,\r\n",
+        "  ROUND(100.0*SUM(stage_7_pnc)/NULLIF(COUNT(*),0),1)               AS pct_pnc,\r\n",
+        "  ROUND(100.0*SUM(stage_8_fp)/NULLIF(COUNT(*),0),1)                AS pct_fp_postpartum,\r\n",
+        "  -- Dropout between stages\r\n",
+        "  COUNT(*) - SUM(stage_2_anc1)                                     AS dropout_before_anc1,\r\n",
+        "  SUM(stage_2_anc1) - SUM(stage_3_anc2)                           AS dropout_anc1_anc2,\r\n",
+        "  SUM(stage_3_anc2) - SUM(stage_4_anc3)                           AS dropout_anc2_anc3,\r\n",
+        "  SUM(stage_4_anc3) - SUM(stage_5_anc4)                           AS dropout_anc3_anc4,\r\n",
+        "  SUM(stage_5_anc4) - SUM(stage_6_delivery)                       AS dropout_anc4_delivery,\r\n",
+        "  SUM(stage_6_delivery) - SUM(stage_7_pnc)                        AS dropout_delivery_pnc,\r\n",
+        "  -- Outcomes\r\n",
+        "  SUM(pnc_within_48hrs)                                            AS pnc_within_48hrs,\r\n",
+        "  SUM(facility_delivery)                                           AS facility_deliveries,\r\n",
+        "  SUM(had_danger_signs)                                            AS total_danger_signs,\r\n",
+        "  SUM(is_maternal_death)                                           AS maternal_deaths,\r\n",
+        "  SUM(ever_on_iron_folate)                                         AS on_iron_folate,\r\n",
+        "  ROUND(100.0*SUM(pnc_within_48hrs)/NULLIF(SUM(stage_7_pnc),0),1) AS pct_pnc_48hrs,\r\n",
+        "  ROUND(100.0*SUM(facility_delivery)/NULLIF(SUM(stage_6_delivery),0),1) AS pct_facility_delivery,\r\n",
+        "  ROUND(100.0*SUM(ever_on_iron_folate)/NULLIF(COUNT(*),0),1)       AS pct_iron_folate\r\n",
+        "FROM community_health_intelligence.gold.fact_pregnancy_journey\r\n",
+        "GROUP BY county_clean"
+      ]
+    },
+    {
+      "name": "a4663e1e",
+      "displayName": "ds_funnel_stages",
+      "queryLines": [
+        "-- Dataset: ds_funnel_stages\r\n",
+        "-- Unpivoted funnel stages for bar chart visualization\r\n",
+        "WITH totals AS (\r\n",
+        "  SELECT\r\n",
+        "    COUNT(*)                      AS total_registered,\r\n",
+        "    SUM(stage_2_anc1)             AS reached_anc1,\r\n",
+        "    SUM(stage_3_anc2)             AS reached_anc2,\r\n",
+        "    SUM(stage_4_anc3)             AS reached_anc3,\r\n",
+        "    SUM(stage_5_anc4)             AS reached_anc4,\r\n",
+        "    SUM(stage_6_delivery)         AS reached_delivery,\r\n",
+        "    SUM(stage_7_pnc)              AS reached_pnc,\r\n",
+        "    SUM(stage_8_fp)               AS reached_fp\r\n",
+        "  FROM community_health_intelligence.gold.fact_pregnancy_journey\r\n",
+        ")\r\n",
+        "SELECT stage_order, stage_label, women_count,\r\n",
+        "  ROUND(100.0 * women_count / MAX(women_count) OVER(), 1) AS pct_of_registered\r\n",
+        "FROM (\r\n",
+        "  SELECT 1 AS stage_order, 'Stage 1: Registered'         AS stage_label, total_registered    AS women_count FROM totals UNION ALL\r\n",
+        "  SELECT 2,                'Stage 2: ANC1 initiated',                     reached_anc1        FROM totals UNION ALL\r\n",
+        "  SELECT 3,                'Stage 3: ANC2 attended',                      reached_anc2        FROM totals UNION ALL\r\n",
+        "  SELECT 4,                'Stage 4: ANC3 attended',                      reached_anc3        FROM totals UNION ALL\r\n",
+        "  SELECT 5,                'Stage 5: ANC4+ complete',                     reached_anc4        FROM totals UNION ALL\r\n",
+        "  SELECT 6,                'Stage 6: Delivery reached',                   reached_delivery    FROM totals UNION ALL\r\n",
+        "  SELECT 7,                'Stage 7: PNC contacted',                      reached_pnc         FROM totals UNION ALL\r\n",
+        "  SELECT 8,                'Stage 8: FP postpartum',                      reached_fp          FROM totals\r\n",
+        ")\r\n",
+        "ORDER BY stage_order"
+      ]
+    },
+    {
+      "name": "c6ea1673",
+      "displayName": "ds_maternal_funnel",
+      "queryLines": [
+        "-- Dataset: ds_maternal_funnel\r\n",
+        "SELECT\r\n",
+        "  county_clean,\r\n",
+        "  COUNT(*)                                                          AS total_registered,\r\n",
+        "  SUM(stage_2_anc1)                                                 AS reached_anc1,\r\n",
+        "  SUM(stage_3_anc2)                                                 AS reached_anc2,\r\n",
+        "  SUM(stage_4_anc3)                                                 AS reached_anc3,\r\n",
+        "  SUM(stage_5_anc4)                                                 AS reached_anc4_plus,\r\n",
+        "  SUM(stage_6_delivery)                                             AS reached_delivery,\r\n",
+        "  SUM(stage_7_pnc)                                                  AS reached_pnc,\r\n",
+        "  SUM(stage_8_fp)                                                   AS reached_fp_postpartum,\r\n",
+        "  -- Conversion rates\r\n",
+        "  ROUND(100.0*SUM(stage_2_anc1)/NULLIF(COUNT(*),0),1)              AS pct_anc1,\r\n",
+        "  ROUND(100.0*SUM(stage_3_anc2)/NULLIF(COUNT(*),0),1)              AS pct_anc2,\r\n",
+        "  ROUND(100.0*SUM(stage_4_anc3)/NULLIF(COUNT(*),0),1)              AS pct_anc3,\r\n",
+        "  ROUND(100.0*SUM(stage_5_anc4)/NULLIF(COUNT(*),0),1)              AS pct_anc4_complete,\r\n",
+        "  ROUND(100.0*SUM(stage_6_delivery)/NULLIF(COUNT(*),0),1)          AS pct_delivery,\r\n",
+        "  ROUND(100.0*SUM(stage_7_pnc)/NULLIF(COUNT(*),0),1)               AS pct_pnc,\r\n",
+        "  ROUND(100.0*SUM(stage_8_fp)/NULLIF(COUNT(*),0),1)                AS pct_fp_postpartum,\r\n",
+        "  -- Dropout between stages\r\n",
+        "  COUNT(*) - SUM(stage_2_anc1)                                     AS dropout_before_anc1,\r\n",
+        "  SUM(stage_2_anc1) - SUM(stage_3_anc2)                           AS dropout_anc1_anc2,\r\n",
+        "  SUM(stage_3_anc2) - SUM(stage_4_anc3)                           AS dropout_anc2_anc3,\r\n",
+        "  SUM(stage_4_anc3) - SUM(stage_5_anc4)                           AS dropout_anc3_anc4,\r\n",
+        "  SUM(stage_5_anc4) - SUM(stage_6_delivery)                       AS dropout_anc4_delivery,\r\n",
+        "  SUM(stage_6_delivery) - SUM(stage_7_pnc)                        AS dropout_delivery_pnc,\r\n",
+        "  -- Outcomes\r\n",
+        "  SUM(pnc_within_48hrs)                                            AS pnc_within_48hrs,\r\n",
+        "  SUM(facility_delivery)                                           AS facility_deliveries,\r\n",
+        "  SUM(had_danger_signs)                                            AS total_danger_signs,\r\n",
+        "  SUM(is_maternal_death)                                           AS maternal_deaths,\r\n",
+        "  SUM(ever_on_iron_folate)                                         AS on_iron_folate,\r\n",
+        "  ROUND(100.0*SUM(pnc_within_48hrs)/NULLIF(SUM(stage_7_pnc),0),1) AS pct_pnc_48hrs,\r\n",
+        "  ROUND(100.0*SUM(facility_delivery)/NULLIF(SUM(stage_6_delivery),0),1) AS pct_facility_delivery,\r\n",
+        "  ROUND(100.0*SUM(ever_on_iron_folate)/NULLIF(COUNT(*),0),1)       AS pct_iron_folate\r\n",
+        "FROM community_health_intelligence.gold.fact_pregnancy_journey\r\n",
+        "GROUP BY county_clean"
+      ]
+    },
+    {
+      "name": "53809833",
+      "displayName": "ds_funnel_stages",
+      "queryLines": [
+        "-- Dataset: ds_funnel_stages\r\n",
+        "-- Unpivoted funnel stages for bar chart visualization\r\n",
+        "WITH totals AS (\r\n",
+        "  SELECT\r\n",
+        "    COUNT(*)                      AS total_registered,\r\n",
+        "    SUM(stage_2_anc1)             AS reached_anc1,\r\n",
+        "    SUM(stage_3_anc2)             AS reached_anc2,\r\n",
+        "    SUM(stage_4_anc3)             AS reached_anc3,\r\n",
+        "    SUM(stage_5_anc4)             AS reached_anc4,\r\n",
+        "    SUM(stage_6_delivery)         AS reached_delivery,\r\n",
+        "    SUM(stage_7_pnc)              AS reached_pnc,\r\n",
+        "    SUM(stage_8_fp)               AS reached_fp\r\n",
+        "  FROM community_health_intelligence.gold.fact_pregnancy_journey\r\n",
+        ")\r\n",
+        "SELECT stage_order, stage_label, women_count,\r\n",
+        "  ROUND(100.0 * women_count / MAX(women_count) OVER(), 1) AS pct_of_registered\r\n",
+        "FROM (\r\n",
+        "  SELECT 1 AS stage_order, 'Stage 1: Registered'         AS stage_label, total_registered    AS women_count FROM totals UNION ALL\r\n",
+        "  SELECT 2,                'Stage 2: ANC1 initiated',                     reached_anc1        FROM totals UNION ALL\r\n",
+        "  SELECT 3,                'Stage 3: ANC2 attended',                      reached_anc2        FROM totals UNION ALL\r\n",
+        "  SELECT 4,                'Stage 4: ANC3 attended',                      reached_anc3        FROM totals UNION ALL\r\n",
+        "  SELECT 5,                'Stage 5: ANC4+ complete',                     reached_anc4        FROM totals UNION ALL\r\n",
+        "  SELECT 6,                'Stage 6: Delivery reached',                   reached_delivery    FROM totals UNION ALL\r\n",
+        "  SELECT 7,                'Stage 7: PNC contacted',                      reached_pnc         FROM totals UNION ALL\r\n",
+        "  SELECT 8,                'Stage 8: FP postpartum',                      reached_fp          FROM totals\r\n",
+        ")\r\n",
+        "ORDER BY stage_order"
+      ]
+    },
+    {
+      "name": "6693cfe0",
+      "displayName": "ds_maternal_kpis",
+      "queryLines": [
+        "-- Dataset: ds_maternal_kpis\r\n",
+        "SELECT\r\n",
+        "  COUNT(*)                                                              AS total_episodes,\r\n",
+        "  SUM(stage_5_anc4)                                                     AS anc4_complete,\r\n",
+        "  ROUND(100.0*SUM(stage_5_anc4)/NULLIF(COUNT(*),0),1)                  AS anc4_completion_pct,\r\n",
+        "  SUM(stage_7_pnc)                                                      AS pnc_reached,\r\n",
+        "  ROUND(100.0*SUM(stage_7_pnc)/NULLIF(COUNT(*),0),1)                   AS pnc_coverage_pct,\r\n",
+        "  SUM(pnc_within_48hrs)                                                 AS pnc_48hrs,\r\n",
+        "  ROUND(100.0*SUM(pnc_within_48hrs)/NULLIF(SUM(stage_7_pnc),0),1)      AS pnc_48hr_rate,\r\n",
+        "  SUM(facility_delivery)                                                AS facility_deliveries,\r\n",
+        "  ROUND(100.0*SUM(facility_delivery)/NULLIF(SUM(stage_6_delivery),0),1) AS facility_delivery_rate,\r\n",
+        "  SUM(had_danger_signs)                                                 AS danger_sign_cases,\r\n",
+        "  ROUND(100.0*SUM(had_danger_signs)/NULLIF(COUNT(*),0),1)               AS danger_sign_rate,\r\n",
+        "  SUM(is_maternal_death)                                                AS maternal_deaths,\r\n",
+        "  SUM(ever_on_iron_folate)                                              AS on_iron_folate,\r\n",
+        "  ROUND(100.0*SUM(ever_on_iron_folate)/NULLIF(COUNT(*),0),1)            AS iron_folate_coverage,\r\n",
+        "  -- Biggest dropout stage\r\n",
+        "  COUNT(*) - SUM(stage_2_anc1)                                         AS dropout_before_anc1,\r\n",
+        "  SUM(stage_3_anc2) - SUM(stage_4_anc3)                               AS dropout_anc2_anc3,\r\n",
+        "  SUM(stage_4_anc3) - SUM(stage_5_anc4)                               AS dropout_anc3_anc4\r\n",
+        "FROM community_health_intelligence.gold.fact_pregnancy_journey"
+      ]
+    },
+    {
+      "name": "b9cdce7a",
+      "displayName": "ds_dropout_analysis",
+      "queryLines": [
+        "-- Dataset: ds_dropout_analysis\r\n",
+        "SELECT\r\n",
+        "  dropout_stage,\r\n",
+        "  maternal_age_group,\r\n",
+        "  muac_worst                                             AS muac_risk,\r\n",
+        "  COUNT(*)                                               AS women_count,\r\n",
+        "  ROUND(100.0*COUNT(*)/SUM(COUNT(*)) OVER(),1)           AS pct_of_total,\r\n",
+        "  SUM(had_danger_signs)                                  AS with_danger_signs,\r\n",
+        "  ROUND(AVG(total_anc_visits),1)                         AS avg_anc_visits,\r\n",
+        "  ROUND(AVG(age_years),1)                                AS avg_age,\r\n",
+        "  SUM(pnc_within_48hrs)                                  AS pnc_within_48hrs,\r\n",
+        "  SUM(facility_delivery)                                 AS facility_deliveries,\r\n",
+        "  SUM(is_maternal_death)                                 AS maternal_deaths\r\n",
+        "FROM community_health_intelligence.gold.fact_pregnancy_journey\r\n",
+        "GROUP BY ALL\r\n",
+        "ORDER BY women_count DESC"
+      ]
+    },
+    {
+      "name": "edbdd54b",
+      "displayName": "ds_chw_performance",
+      "queryLines": [
+        "SELECT\r\n",
+        "  c.chw_name,\r\n",
+        "  c.community_unit,\r\n",
+        "  c.sub_county_name,\r\n",
+        "  c.county_name,\r\n",
+        "  s.overall_score_pct,\r\n",
+        "  s.immunization_score_pct,\r\n",
+        "  s.pregnancy_score_pct,\r\n",
+        "  s.nutrition_score_pct,\r\n",
+        "  s.malaria_score_pct,\r\n",
+        "  s.fp_score_pct,\r\n",
+        "  s.newborn_score_pct,\r\n",
+        "  s.wash_score_pct,\r\n",
+        "  s.has_all_tools,\r\n",
+        "  s.has_ppe,\r\n",
+        "  s.visit_count,\r\n",
+        "  s.reportedm,\r\n",
+        "  COALESCE(hv.total_home_visits, 0)                                  AS total_home_visits,\r\n",
+        "  CASE\r\n",
+        "    WHEN s.overall_score_pct >= 80 THEN 'High performer'\r\n",
+        "    WHEN s.overall_score_pct >= 60 THEN 'Meeting expectations'\r\n",
+        "    WHEN s.overall_score_pct >= 40 THEN 'Below average'\r\n",
+        "    ELSE 'Needs support' END                                         AS performance_tier,\r\n",
+        "  CASE WHEN s.has_all_tools = 1 AND s.has_ppe = 1 THEN 'Fully equipped'\r\n",
+        "       WHEN s.has_all_tools = 1 OR s.has_ppe = 1  THEN 'Partially equipped'\r\n",
+        "       ELSE 'Not equipped' END                                       AS equipment_status\r\n",
+        "FROM community_health_intelligence.gold.fact_supervision s\r\n",
+        "JOIN community_health_intelligence.gold.dim_chw c\r\n",
+        "  ON s.chw_uuid = c.chw_uuid\r\n",
+        "LEFT JOIN (\r\n",
+        "  SELECT chw_uuid, SUM(visit_count) AS total_home_visits\r\n",
+        "  FROM community_health_intelligence.gold.fact_home_visit\r\n",
+        "  GROUP BY chw_uuid\r\n",
+        ") hv ON s.chw_uuid = hv.chw_uuid\r\n",
+        "WHERE s.overall_score_pct IS NOT NULL\r\n",
+        "ORDER BY s.overall_score_pct DESC"
+      ]
+    },
+    {
+      "name": "6254a886",
+      "displayName": "ds_supervision_domain_scores",
+      "queryLines": [
+        "-- Unpivoted domain scores for radar/heatmap\r\n",
+        "WITH scores AS (\r\n",
+        "  SELECT\r\n",
+        "    c.chw_name,\r\n",
+        "    c.sub_county_name,\r\n",
+        "    c.county_name,\r\n",
+        "    s.overall_score_pct,\r\n",
+        "    s.immunization_score_pct,\r\n",
+        "    s.pregnancy_score_pct,\r\n",
+        "    s.nutrition_score_pct,\r\n",
+        "    s.malaria_score_pct,\r\n",
+        "    s.fp_score_pct,\r\n",
+        "    s.newborn_score_pct,\r\n",
+        "    s.wash_score_pct\r\n",
+        "  FROM community_health_intelligence.gold.fact_supervision s\r\n",
+        "  JOIN community_health_intelligence.gold.dim_chw c ON s.chw_uuid = c.chw_uuid\r\n",
+        "  WHERE s.overall_score_pct IS NOT NULL\r\n",
+        ")\r\n",
+        "SELECT domain, ROUND(AVG(score), 1) AS avg_score,\r\n",
+        "  ROUND(MIN(score), 1) AS min_score,\r\n",
+        "  ROUND(MAX(score), 1) AS max_score,\r\n",
+        "  COUNT(*) AS chw_count\r\n",
+        "FROM (\r\n",
+        "  SELECT 'Immunization'   AS domain, immunization_score_pct AS score FROM scores\r\n",
+        "  UNION ALL\r\n",
+        "  SELECT 'Pregnancy',              pregnancy_score_pct     FROM scores\r\n",
+        "  UNION ALL\r\n",
+        "  SELECT 'Nutrition',              nutrition_score_pct     FROM scores\r\n",
+        "  UNION ALL\r\n",
+        "  SELECT 'Malaria',                malaria_score_pct       FROM scores\r\n",
+        "  UNION ALL\r\n",
+        "  SELECT 'Family Planning',        fp_score_pct            FROM scores\r\n",
+        "  UNION ALL\r\n",
+        "  SELECT 'Newborn Care',           newborn_score_pct       FROM scores\r\n",
+        "  UNION ALL\r\n",
+        "  SELECT 'WASH',                   wash_score_pct          FROM scores\r\n",
+        ")\r\n",
+        "WHERE score IS NOT NULL\r\n",
+        "GROUP BY domain\r\n",
+        "ORDER BY avg_score DESC"
+      ]
+    },
+    {
+      "name": "8d3a8d33",
+      "displayName": "ds_chw_kpis",
+      "queryLines": [
+        "SELECT\r\n",
+        "  COUNT(DISTINCT s.chw_uuid)                                        AS total_supervised,\r\n",
+        "  ROUND(AVG(s.overall_score_pct), 1)                                AS avg_overall_score,\r\n",
+        "  SUM(CASE WHEN s.overall_score_pct >= 80 THEN 1 ELSE 0 END)        AS high_performers,\r\n",
+        "  SUM(CASE WHEN s.overall_score_pct >= 60\r\n",
+        "        AND s.overall_score_pct < 80 THEN 1 ELSE 0 END)             AS meeting_expectations,\r\n",
+        "  SUM(CASE WHEN s.overall_score_pct < 40 THEN 1 ELSE 0 END)         AS needs_support,\r\n",
+        "  SUM(s.has_all_tools)                                              AS fully_equipped,\r\n",
+        "  SUM(s.has_ppe)                                                    AS has_ppe,\r\n",
+        "  ROUND(100.0*SUM(s.has_all_tools)/NULLIF(COUNT(*),0),1)            AS tools_readiness_pct,\r\n",
+        "  ROUND(100.0*SUM(s.has_ppe)/NULLIF(COUNT(*),0),1)                  AS ppe_readiness_pct,\r\n",
+        "  SUM(hv.total_home_visits)                                         AS total_home_visits,\r\n",
+        "  ROUND(AVG(hv.total_home_visits),0)                                AS avg_visits_per_chw\r\n",
+        "FROM community_health_intelligence.gold.fact_supervision s\r\n",
+        "LEFT JOIN (\r\n",
+        "  SELECT chw_uuid, SUM(visit_count) AS total_home_visits\r\n",
+        "  FROM community_health_intelligence.gold.fact_home_visit\r\n",
+        "  GROUP BY chw_uuid\r\n",
+        ") hv ON s.chw_uuid = hv.chw_uuid\r\n",
+        "WHERE s.overall_score_pct IS NOT NULL"
+      ]
+    },
+    {
+      "name": "eb770221",
+      "displayName": "ds_coverage_gaps",
+      "queryLines": [
+        "SELECT\r\n",
+        "  c.county_name,\r\n",
+        "  c.sub_county_name,\r\n",
+        "  c.community_unit,\r\n",
+        "  c.chw_name,\r\n",
+        "  c.chw_uuid,\r\n",
+        "  COALESCE(pop.u2_pop, 0)                                           AS u2_pop,\r\n",
+        "  COALESCE(pop.u5_pop, 0)                                           AS u5_pop,\r\n",
+        "  COALESCE(pop.wra_pop, 0)                                          AS wra_pop,\r\n",
+        "  COALESCE(iz.iz_visits, 0)                                         AS iz_visits,\r\n",
+        "  COALESCE(iz.fully_immunized, 0)                                   AS fully_immunized,\r\n",
+        "  COALESCE(pop.u5_pop, 0) - COALESCE(iz.iz_visits, 0)              AS iz_unserved,\r\n",
+        "  ROUND(100.0*COALESCE(iz.fully_immunized,0)\r\n",
+        "    /NULLIF(COALESCE(pop.u5_pop,0),0),1)                            AS iz_coverage_pct,\r\n",
+        "  COALESCE(fp.on_fp, 0)                                             AS fp_on_fp,\r\n",
+        "  COALESCE(pop.wra_pop,0) - COALESCE(fp.on_fp,0)                   AS fp_unserved_wra,\r\n",
+        "  ROUND(100.0*COALESCE(fp.on_fp,0)\r\n",
+        "    /NULLIF(COALESCE(pop.wra_pop,0),0),1)                           AS mcpr_pct,\r\n",
+        "  COALESCE(hv.home_visits, 0)                                       AS home_visits,\r\n",
+        "  ROUND(100.0*COALESCE(hv.home_visits,0)\r\n",
+        "    /NULLIF(COALESCE(pop.u5_pop,0),0),1)                            AS home_visit_coverage_pct\r\n",
+        "FROM community_health_intelligence.gold.dim_chw c\r\n",
+        "LEFT JOIN (\r\n",
+        "  SELECT chw_uuid,\r\n",
+        "    SUM(u5_pop) AS u5_pop, SUM(u2_pop) AS u2_pop, SUM(wra_pop) AS wra_pop\r\n",
+        "  FROM community_health_intelligence.gold.fact_population GROUP BY chw_uuid\r\n",
+        ") pop ON c.chw_uuid = pop.chw_uuid\r\n",
+        "LEFT JOIN (\r\n",
+        "  SELECT chw_uuid, COUNT(*) AS iz_visits, SUM(is_fully_immunized) AS fully_immunized\r\n",
+        "  FROM community_health_intelligence.gold.fact_immunization GROUP BY chw_uuid\r\n",
+        ") iz ON c.chw_uuid = iz.chw_uuid\r\n",
+        "LEFT JOIN (\r\n",
+        "  SELECT chw_uuid, SUM(is_on_fp) AS on_fp\r\n",
+        "  FROM community_health_intelligence.gold.fact_family_planning GROUP BY chw_uuid\r\n",
+        ") fp ON c.chw_uuid = fp.chw_uuid\r\n",
+        "LEFT JOIN (\r\n",
+        "  SELECT chw_uuid, SUM(visit_count) AS home_visits\r\n",
+        "  FROM community_health_intelligence.gold.fact_home_visit GROUP BY chw_uuid\r\n",
+        ") hv ON c.chw_uuid = hv.chw_uuid\r\n",
+        "WHERE c.sub_county_name IS NOT NULL AND c.sub_county_name != ''\r\n",
+        "ORDER BY iz_coverage_pct ASC"
+      ]
+    },
+    {
+      "name": "5a00995f",
+      "displayName": "ds_coverage_kpis",
+      "queryLines": [
+        "SELECT\r\n",
+        "  SUM(u5_pop)                                                        AS total_u5_pop,\r\n",
+        "  SUM(wra_pop)                                                       AS total_wra_pop,\r\n",
+        "  SUM(iz_visits)                                                     AS total_iz_visits,\r\n",
+        "  SUM(iz_unserved)                                                   AS total_iz_unserved,\r\n",
+        "  ROUND(100.0*SUM(fully_immunized)/NULLIF(SUM(u5_pop),0),1)         AS overall_iz_coverage_pct,\r\n",
+        "  SUM(fp_on_fp)                                                      AS total_on_fp,\r\n",
+        "  SUM(fp_unserved_wra)                                               AS total_fp_unserved,\r\n",
+        "  ROUND(100.0*SUM(fp_on_fp)/NULLIF(SUM(wra_pop),0),1)               AS overall_mcpr_pct,\r\n",
+        "  SUM(home_visits)                                                   AS total_home_visits,\r\n",
+        "  COUNT(DISTINCT chw_uuid)                                           AS chw_areas_covered,\r\n",
+        "  COUNT(DISTINCT sub_county_name)                                    AS sub_counties_covered\r\n",
+        "FROM (\r\n",
+        "  SELECT\r\n",
+        "    c.chw_uuid, c.sub_county_name,\r\n",
+        "    COALESCE(pop.u5_pop,0) AS u5_pop, COALESCE(pop.wra_pop,0) AS wra_pop,\r\n",
+        "    COALESCE(iz.iz_visits,0) AS iz_visits,\r\n",
+        "    COALESCE(iz.fully_immunized,0) AS fully_immunized,\r\n",
+        "    COALESCE(pop.u5_pop,0)-COALESCE(iz.iz_visits,0) AS iz_unserved,\r\n",
+        "    COALESCE(fp.on_fp,0) AS fp_on_fp,\r\n",
+        "    COALESCE(pop.wra_pop,0)-COALESCE(fp.on_fp,0) AS fp_unserved_wra,\r\n",
+        "    COALESCE(hv.home_visits,0) AS home_visits\r\n",
+        "  FROM community_health_intelligence.gold.dim_chw c\r\n",
+        "  LEFT JOIN (SELECT chw_uuid, SUM(u5_pop) AS u5_pop, SUM(wra_pop) AS wra_pop,\r\n",
+        "    SUM(u2_pop) AS u2_pop FROM community_health_intelligence.gold.fact_population\r\n",
+        "    GROUP BY chw_uuid) pop ON c.chw_uuid = pop.chw_uuid\r\n",
+        "  LEFT JOIN (SELECT chw_uuid, COUNT(*) AS iz_visits,\r\n",
+        "    SUM(is_fully_immunized) AS fully_immunized\r\n",
+        "    FROM community_health_intelligence.gold.fact_immunization\r\n",
+        "    GROUP BY chw_uuid) iz ON c.chw_uuid = iz.chw_uuid\r\n",
+        "  LEFT JOIN (SELECT chw_uuid, SUM(is_on_fp) AS on_fp\r\n",
+        "    FROM community_health_intelligence.gold.fact_family_planning\r\n",
+        "    GROUP BY chw_uuid) fp ON c.chw_uuid = fp.chw_uuid\r\n",
+        "  LEFT JOIN (SELECT chw_uuid, SUM(visit_count) AS home_visits\r\n",
+        "    FROM community_health_intelligence.gold.fact_home_visit\r\n",
+        "    GROUP BY chw_uuid) hv ON c.chw_uuid = hv.chw_uuid\r\n",
+        ")"
+      ]
+    },
+    {
+      "name": "02d71686",
+      "displayName": "ds_top10_gaps",
+      "queryLines": [
+        "SELECT\r\n",
+        "  c.sub_county_name,\r\n",
+        "  c.county_name,\r\n",
+        "  SUM(COALESCE(pop.u5_pop,0))                                       AS u5_pop,\r\n",
+        "  SUM(COALESCE(iz.iz_visits,0))                                     AS iz_visits,\r\n",
+        "  SUM(COALESCE(pop.u5_pop,0)) - SUM(COALESCE(iz.iz_visits,0))      AS iz_unserved,\r\n",
+        "  ROUND(100.0*SUM(COALESCE(iz.fully_immunized,0))\r\n",
+        "    /NULLIF(SUM(COALESCE(pop.u5_pop,0)),0),1)                       AS iz_coverage_pct,\r\n",
+        "  SUM(COALESCE(pop.wra_pop,0))                                      AS wra_pop,\r\n",
+        "  SUM(COALESCE(fp.on_fp,0))                                         AS fp_on_fp,\r\n",
+        "  SUM(COALESCE(pop.wra_pop,0)) - SUM(COALESCE(fp.on_fp,0))         AS fp_unserved,\r\n",
+        "  ROUND(100.0*SUM(COALESCE(fp.on_fp,0))\r\n",
+        "    /NULLIF(SUM(COALESCE(pop.wra_pop,0)),0),1)                      AS mcpr_pct,\r\n",
+        "  COUNT(DISTINCT c.chw_uuid)                                        AS chw_count\r\n",
+        "FROM community_health_intelligence.gold.dim_chw c\r\n",
+        "LEFT JOIN (\r\n",
+        "  SELECT chw_uuid,\r\n",
+        "    SUM(u5_pop) AS u5_pop, SUM(wra_pop) AS wra_pop\r\n",
+        "  FROM community_health_intelligence.gold.fact_population\r\n",
+        "  GROUP BY chw_uuid\r\n",
+        ") pop ON c.chw_uuid = pop.chw_uuid\r\n",
+        "LEFT JOIN (\r\n",
+        "  SELECT chw_uuid,\r\n",
+        "    COUNT(*) AS iz_visits,\r\n",
+        "    SUM(is_fully_immunized) AS fully_immunized\r\n",
+        "  FROM community_health_intelligence.gold.fact_immunization\r\n",
+        "  GROUP BY chw_uuid\r\n",
+        ") iz ON c.chw_uuid = iz.chw_uuid\r\n",
+        "LEFT JOIN (\r\n",
+        "  SELECT chw_uuid, SUM(is_on_fp) AS on_fp\r\n",
+        "  FROM community_health_intelligence.gold.fact_family_planning\r\n",
+        "  GROUP BY chw_uuid\r\n",
+        ") fp ON c.chw_uuid = fp.chw_uuid\r\n",
+        "WHERE c.sub_county_name IS NOT NULL\r\n",
+        "  AND c.sub_county_name != ''\r\n",
+        "  AND c.county_name IS NOT NULL\r\n",
+        "GROUP BY c.sub_county_name, c.county_name\r\n",
+        "ORDER BY iz_unserved DESC\r\n",
+        "LIMIT 10"
+      ]
+    },
+    {
+      "name": "anc_defaulters_subcounty",
+      "displayName": "ds_anc_defaulters_subcounty",
+      "queryLines": [
+        "SELECT\n",
+        "  sub_county_clean AS sub_county_name,\n",
+        "  county_clean AS county_name,\n",
+        "  COUNT(*) AS total_pregnancies,\n",
+        "  SUM(is_anc_defaulter) AS anc_defaulters,\n",
+        "  ROUND(100.0 * SUM(is_anc_defaulter) / NULLIF(COUNT(*), 0), 1) AS anc_defaulter_rate\n",
+        "FROM\n",
+        "  community_health_intelligence.gold.fact_pregnancy\n",
+        "WHERE\n",
+        "  sub_county_clean IS NOT NULL\n",
+        "  AND sub_county_clean != ''\n",
+        "GROUP BY\n",
+        "  sub_county_clean,\n",
+        "  county_clean\n",
+        "ORDER BY\n",
+        "  anc_defaulter_rate DESC"
+      ],
+      "columns": [
+        {
+          "displayName": "Risk Level",
+          "description": "Flags sub-counties with ANC defaulter rate >= 10%",
+          "expression": "CASE WHEN `anc_defaulter_rate` >= 10 THEN 'âš  Above 10% Threshold' ELSE 'Below 10% Threshold' END"
+        }
+      ]
+    },
+    {
+      "name": "maternal_page_kpis",
+      "displayName": "ds_maternal_page_kpis",
+      "queryLines": [
+        "SELECT\n",
+        "  j.anc1_rate,\n",
+        "  j.anc2_rate,\n",
+        "  j.anc4_rate,\n",
+        "  j.skilled_delivery_rate,\n",
+        "  j.pnc1_rate,\n",
+        "  j.pnc_48hr_rate,\n",
+        "  j.total_registered,\n",
+        "  j.facility_delivery_pct,\n",
+        "  p.anc_defaulter_rate,\n",
+        "  ROUND(100.0 * fp.on_fp / NULLIF(pop.wra_pop, 0), 1) AS mcpr_pct\n",
+        "FROM\n",
+        "  (\n",
+        "    SELECT\n",
+        "      COUNT(*) AS total_registered,\n",
+        "      ROUND(100.0 * SUM(stage_2_anc1) / NULLIF(COUNT(*), 0), 1) AS anc1_rate,\n",
+        "      ROUND(100.0 * SUM(stage_3_anc2) / NULLIF(COUNT(*), 0), 1) AS anc2_rate,\n",
+        "      ROUND(100.0 * SUM(stage_5_anc4) / NULLIF(COUNT(*), 0), 1) AS anc4_rate,\n",
+        "      ROUND(\n",
+        "        100.0 * SUM(facility_delivery) / NULLIF(SUM(stage_6_delivery), 0),\n",
+        "        1\n",
+        "      ) AS skilled_delivery_rate,\n",
+        "      ROUND(100.0 * SUM(stage_7_pnc) / NULLIF(COUNT(*), 0), 1) AS pnc1_rate,\n",
+        "      ROUND(100.0 * SUM(pnc_within_48hrs) / NULLIF(SUM(stage_7_pnc), 0), 1) AS pnc_48hr_rate,\n",
+        "      ROUND(100.0 * SUM(facility_delivery) / NULLIF(COUNT(*), 0), 1) AS facility_delivery_pct\n",
+        "    FROM\n",
+        "      community_health_intelligence.gold.fact_pregnancy_journey\n",
+        "  ) j,\n",
+        "  (\n",
+        "    SELECT\n",
+        "      ROUND(100.0 * SUM(is_anc_defaulter) / NULLIF(COUNT(*), 0), 1) AS anc_defaulter_rate\n",
+        "    FROM\n",
+        "      community_health_intelligence.gold.fact_pregnancy\n",
+        "  ) p,\n",
+        "  (\n",
+        "    SELECT\n",
+        "      SUM(is_on_fp) AS on_fp\n",
+        "    FROM\n",
+        "      community_health_intelligence.gold.fact_family_planning\n",
+        "  ) fp,\n",
+        "  (\n",
+        "    SELECT\n",
+        "      SUM(wra_pop) AS wra_pop\n",
+        "    FROM\n",
+        "      community_health_intelligence.gold.fact_population\n",
+        "  ) pop"
+      ]
+    },
+    {
+      "name": "anc4_subcounty",
+      "displayName": "ds_anc4_subcounty",
+      "queryLines": [
+        "SELECT\n",
+        "  sub_county_clean AS sub_county_name,\n",
+        "  county_clean AS county_name,\n",
+        "  COUNT(*) AS total_pregnancies,\n",
+        "  SUM(anc_complete) AS anc4_complete,\n",
+        "  ROUND(100.0 * SUM(anc_complete) / NULLIF(COUNT(*), 0), 1) AS anc4_rate\n",
+        "FROM\n",
+        "  community_health_intelligence.gold.fact_pregnancy\n",
+        "WHERE\n",
+        "  sub_county_clean IS NOT NULL\n",
+        "  AND sub_county_clean != ''\n",
+        "GROUP BY\n",
+        "  sub_county_clean,\n",
+        "  county_clean\n",
+        "ORDER BY\n",
+        "  anc4_rate DESC"
+      ]
+    },
+    {
+      "name": "exec_ops",
+      "displayName": "ds_exec_ops",
+      "queryLines": [
+        "SELECT\n",
+        "  c.county_name,\n",
+        "  c.sub_county_name,\n",
+        "  c.community_unit,\n",
+        "  c.chw_name,\n",
+        "  c.chw_uuid,\n",
+        "  COALESCE(fp.on_fp, 0) AS on_fp,\n",
+        "  COALESCE(pop.wra_pop, 0) AS wra_pop,\n",
+        "  COALESCE(hv.visit_count, 0) AS home_visits,\n",
+        "  COALESCE(iz.iz_visits, 0) AS iz_visits,\n",
+        "  COALESCE(iz.fully_immunized, 0) AS fully_immunized\n",
+        "FROM\n",
+        "  community_health_intelligence.gold.dim_chw c\n",
+        "    LEFT JOIN (\n",
+        "      SELECT\n",
+        "        chw_uuid,\n",
+        "        SUM(is_on_fp) AS on_fp\n",
+        "      FROM\n",
+        "        community_health_intelligence.gold.fact_family_planning\n",
+        "      GROUP BY\n",
+        "        chw_uuid\n",
+        "    ) fp\n",
+        "      ON c.chw_uuid = fp.chw_uuid\n",
+        "    LEFT JOIN (\n",
+        "      SELECT\n",
+        "        chw_uuid,\n",
+        "        SUM(wra_pop) AS wra_pop\n",
+        "      FROM\n",
+        "        community_health_intelligence.gold.fact_population\n",
+        "      GROUP BY\n",
+        "        chw_uuid\n",
+        "    ) pop\n",
+        "      ON c.chw_uuid = pop.chw_uuid\n",
+        "    LEFT JOIN (\n",
+        "      SELECT\n",
+        "        chw_uuid,\n",
+        "        SUM(visit_count) AS visit_count\n",
+        "      FROM\n",
+        "        community_health_intelligence.gold.fact_home_visit\n",
+        "      GROUP BY\n",
+        "        chw_uuid\n",
+        "    ) hv\n",
+        "      ON c.chw_uuid = hv.chw_uuid\n",
+        "    LEFT JOIN (\n",
+        "      SELECT\n",
+        "        chw_uuid,\n",
+        "        COUNT(*) AS iz_visits,\n",
+        "        SUM(is_fully_immunized) AS fully_immunized\n",
+        "      FROM\n",
+        "        community_health_intelligence.gold.fact_immunization\n",
+        "      GROUP BY\n",
+        "        chw_uuid\n",
+        "    ) iz\n",
+        "      ON c.chw_uuid = iz.chw_uuid\n",
+        "WHERE\n",
+        "  c.sub_county_name IS NOT NULL\n",
+        "  AND c.sub_county_name != ''"
+      ],
+      "columns": [
+        {
+          "displayName": "FP Coverage Proxy",
+          "description": "Program-data FP coverage proxy (on_fp / WRA population)",
+          "expression": "ROUND(100.0 * SUM(`on_fp`) / NULLIF(SUM(`wra_pop`), 0), 1)"
+        },
+        {
+          "displayName": "FP2030 Target",
+          "description": "FP2030 target rate constant (25%)",
+          "expression": "25.0"
+        }
+      ]
+    },
+    {
+      "name": "exec_maternal",
+      "displayName": "ds_exec_maternal",
+      "queryLines": [
+        "SELECT\n",
+        "  county_clean AS county_name,\n",
+        "  sub_county_clean AS sub_county_name,\n",
+        "  reportedm,\n",
+        "  COUNT(*) AS pregnancy_registrations,\n",
+        "  SUM(anc_complete) AS anc_4plus_count,\n",
+        "  ROUND(100.0 * SUM(anc_complete) / NULLIF(COUNT(*), 0), 1) AS anc_4plus_completion_pct,\n",
+        "  SUM(is_anc_defaulter) AS anc_defaulter_count,\n",
+        "  ROUND(100.0 * SUM(is_anc_defaulter) / NULLIF(COUNT(*), 0), 1) AS anc_defaulter_rate_pct,\n",
+        "  SUM(has_danger_signs) AS danger_sign_count,\n",
+        "  ROUND(100.0 * SUM(has_danger_signs) / NULLIF(COUNT(*), 0), 1) AS danger_sign_rate_pct,\n",
+        "  0 AS muac_red_count,\n",
+        "  SUM(\n",
+        "    CASE\n",
+        "      WHEN has_danger_signs = 1 THEN 1\n",
+        "      ELSE 0\n",
+        "    END\n",
+        "  ) AS referral_count\n",
+        "FROM\n",
+        "  community_health_intelligence.gold.fact_pregnancy\n",
+        "WHERE\n",
+        "  county_clean IS NOT NULL\n",
+        "  AND county_clean != ''\n",
+        "GROUP BY\n",
+        "  county_clean,\n",
+        "  sub_county_clean,\n",
+        "  reportedm"
+      ],
+      "columns": [
+        {
+          "displayName": "ANC4+ Rate",
+          "description": "% of pregnancies completing ANC4+",
+          "expression": "ROUND(100.0 * SUM(`anc_4plus_count`) / NULLIF(SUM(`pregnancy_registrations`), 0), 1)"
+        },
+        {
+          "displayName": "ANC Defaulter Rate",
+          "description": "% of pregnancies defaulting on ANC",
+          "expression": "ROUND(100.0 * SUM(`anc_defaulter_count`) / NULLIF(SUM(`pregnancy_registrations`), 0), 1)"
+        }
+      ]
+    },
+    {
+      "name": "exec_iz",
+      "displayName": "ds_exec_iz",
+      "queryLines": [
+        "SELECT\n",
+        "  county_clean AS county_name,\n",
+        "  sub_county_clean AS sub_county_name,\n",
+        "  community_unit_clean AS community_unit,\n",
+        "  reportedm,\n",
+        "  chw_uuid,\n",
+        "  immunization_visits,\n",
+        "  fully_immunized_count,\n",
+        "  immunization_coverage_pct,\n",
+        "  defaulter_count,\n",
+        "  defaulter_rate_pct,\n",
+        "  penta1_count,\n",
+        "  penta3_count,\n",
+        "  penta_dropout_rate_pct,\n",
+        "  bcg_count,\n",
+        "  measles_9m_count,\n",
+        "  vitamin_a_count,\n",
+        "  referral_count\n",
+        "FROM\n",
+        "  community_health_intelligence.gold.mv_immunization\n",
+        "WHERE\n",
+        "  county_clean IS NOT NULL\n",
+        "  AND county_clean != ''\n",
+        "  AND county_clean != 'UNKNOWN'"
+      ],
+      "columns": [
+        {
+          "displayName": "Penta3 Completion Rate",
+          "description": "% of IZ visits with Penta3 administered",
+          "expression": "ROUND(100.0 * SUM(`penta3_count`) / NULLIF(SUM(`immunization_visits`), 0), 1)"
+        },
+        {
+          "displayName": "IZ Coverage Rate",
+          "description": "% of IZ visits fully immunized",
+          "expression": "ROUND(100.0 * SUM(`fully_immunized_count`) / NULLIF(SUM(`immunization_visits`), 0), 1)"
+        },
+        {
+          "displayName": "Coverage Status",
+          "description": "On Track >=40%, At Risk 20-40%, Critical <20%",
+          "expression": "CASE WHEN `immunization_coverage_pct` >= 40 THEN 'On Track' WHEN `immunization_coverage_pct` >= 20 THEN 'At Risk' ELSE 'Critical' END"
+        }
+      ]
+    },
+    {
+      "name": "visit_type_breakdown",
+      "displayName": "ds_visit_type_breakdown",
+      "queryLines": [
+        "SELECT\n",
+        "  county_name,\n",
+        "  sub_county_name,\n",
+        "  visit_type,\n",
+        "  visits\n",
+        "FROM\n",
+        "  (\n",
+        "    SELECT\n",
+        "      c.county_name,\n",
+        "      c.sub_county_name,\n",
+        "      'Household Visits' AS visit_type,\n",
+        "      SUM(hv.visit_count) AS visits\n",
+        "    FROM\n",
+        "      community_health_intelligence.gold.dim_chw c\n",
+        "        JOIN community_health_intelligence.gold.fact_home_visit hv\n",
+        "          ON c.chw_uuid = hv.chw_uuid\n",
+        "    WHERE\n",
+        "      c.sub_county_name IS NOT NULL\n",
+        "      AND c.sub_county_name != ''\n",
+        "    GROUP BY\n",
+        "      c.county_name,\n",
+        "      c.sub_county_name\n",
+        "    UNION ALL\n",
+        "    SELECT\n",
+        "      county_clean,\n",
+        "      sub_county_clean,\n",
+        "      'Immunization',\n",
+        "      COUNT(*)\n",
+        "    FROM\n",
+        "      community_health_intelligence.gold.fact_immunization\n",
+        "    WHERE\n",
+        "      sub_county_clean IS NOT NULL\n",
+        "      AND sub_county_clean != ''\n",
+        "    GROUP BY\n",
+        "      county_clean,\n",
+        "      sub_county_clean\n",
+        "    UNION ALL\n",
+        "    SELECT\n",
+        "      county_clean,\n",
+        "      sub_county_clean,\n",
+        "      'ANC Follow-up',\n",
+        "      COUNT(*)\n",
+        "    FROM\n",
+        "      community_health_intelligence.gold.fact_pregnancy\n",
+        "    WHERE\n",
+        "      sub_county_clean IS NOT NULL\n",
+        "      AND sub_county_clean != ''\n",
+        "    GROUP BY\n",
+        "      county_clean,\n",
+        "      sub_county_clean\n",
+        "    UNION ALL\n",
+        "    SELECT\n",
+        "      county_clean,\n",
+        "      sub_county_clean,\n",
+        "      'Defaulter Trace',\n",
+        "      SUM(is_defaulter)\n",
+        "    FROM\n",
+        "      community_health_intelligence.gold.fact_immunization\n",
+        "    WHERE\n",
+        "      sub_county_clean IS NOT NULL\n",
+        "      AND sub_county_clean != ''\n",
+        "    GROUP BY\n",
+        "      county_clean,\n",
+        "      sub_county_clean\n",
+        "  )"
+      ]
+    },
+    {
+      "name": "chw_field_ops",
+      "displayName": "ds_chw_field_ops",
+      "queryLines": [
+        "SELECT\n",
+        "  c.county_name,\n",
+        "  c.sub_county_name,\n",
+        "  c.community_unit,\n",
+        "  c.chw_uuid,\n",
+        "  COALESCE(hv.total_visits, 0) AS home_visits,\n",
+        "  COALESCE(hv.unique_households, 0) AS unique_households,\n",
+        "  COALESCE(hv.active_days, 0) AS active_days,\n",
+        "  COALESCE(iz.iz_visits, 0) AS iz_visits,\n",
+        "  COALESCE(iz.defaulter_traces, 0) AS iz_defaulter_traces,\n",
+        "  COALESCE(iz.fully_immunized, 0) AS fully_immunized\n",
+        "FROM\n",
+        "  community_health_intelligence.gold.dim_chw c\n",
+        "    LEFT JOIN (\n",
+        "      SELECT\n",
+        "        chw_uuid,\n",
+        "        SUM(visit_count) AS total_visits,\n",
+        "        COUNT(DISTINCT family_id) AS unique_households,\n",
+        "        COUNT(DISTINCT date_key) AS active_days\n",
+        "      FROM\n",
+        "        community_health_intelligence.gold.fact_home_visit\n",
+        "      GROUP BY\n",
+        "        chw_uuid\n",
+        "    ) hv\n",
+        "      ON c.chw_uuid = hv.chw_uuid\n",
+        "    LEFT JOIN (\n",
+        "      SELECT\n",
+        "        chw_uuid,\n",
+        "        COUNT(*) AS iz_visits,\n",
+        "        SUM(is_defaulter) AS defaulter_traces,\n",
+        "        SUM(is_fully_immunized) AS fully_immunized\n",
+        "      FROM\n",
+        "        community_health_intelligence.gold.fact_immunization\n",
+        "      GROUP BY\n",
+        "        chw_uuid\n",
+        "    ) iz\n",
+        "      ON c.chw_uuid = iz.chw_uuid\n",
+        "WHERE\n",
+        "  c.sub_county_name IS NOT NULL\n",
+        "  AND c.sub_county_name != ''"
+      ],
+      "columns": [
+        {
+          "displayName": "Productivity Bin",
+          "description": "CHW daily visit productivity bin using home_visits/(active_monthsÃ—22 working days)",
+          "expression": "CASE WHEN `active_days` = 0 THEN 'No Activity' WHEN `home_visits` * 1.0 / NULLIF(`active_days` * 22, 0) < 6 THEN '<6/day' WHEN `home_visits` * 1.0 / NULLIF(`active_days` * 22, 0) < 7 THEN '6-7' WHEN `home_visits` * 1.0 / NULLIF(`active_days` * 22, 0) < 8 THEN '7-8' WHEN `home_visits` * 1.0 / NULLIF(`active_days` * 22, 0) < 9 THEN '8-9' WHEN `home_visits` * 1.0 / NULLIF(`active_days` * 22, 0) < 10 THEN '9-10' ELSE '>10' END"
+        },
+        {
+          "displayName": "CHW Target Status",
+          "description": "Below Target if <8 visits/day, On Track otherwise (corrected for monthly active_days)",
+          "expression": "CASE WHEN `active_days` > 0 AND `home_visits` * 1.0 / NULLIF(`active_days` * 22, 0) >= 8 THEN 'On Track' ELSE 'Below Target' END"
+        },
+        {
+          "displayName": "Avg Daily Visits",
+          "description": "Average daily home visits per CHW (active_months Ã— 22 working days)",
+          "expression": "ROUND(SUM(`home_visits`) / NULLIF(SUM(`active_days`) * 22, 0), 1)"
+        }
+      ]
+    },
+    {
+      "name": "daily_visit_trend",
+      "displayName": "ds_visit_trend",
+      "queryLines": [
+        "SELECT\n",
+        "  hv.date_key,\n",
+        "  CONCAT(\n",
+        "    CASE CAST(hv.date_key % 100 AS INT)\n",
+        "      WHEN 1 THEN 'Jan'\n",
+        "      WHEN 2 THEN 'Feb'\n",
+        "      WHEN 3 THEN 'Mar'\n",
+        "      WHEN 4 THEN 'Apr'\n",
+        "      WHEN 5 THEN 'May'\n",
+        "      WHEN 6 THEN 'Jun'\n",
+        "      WHEN 7 THEN 'Jul'\n",
+        "      WHEN 8 THEN 'Aug'\n",
+        "      WHEN 9 THEN 'Sep'\n",
+        "      WHEN 10 THEN 'Oct'\n",
+        "      WHEN 11 THEN 'Nov'\n",
+        "      WHEN 12 THEN 'Dec'\n",
+        "    END,\n",
+        "    ' ',\n",
+        "    CAST(CAST(hv.date_key / 100 AS INT) AS STRING)\n",
+        "  ) AS month_label,\n",
+        "  c.county_name,\n",
+        "  c.sub_county_name,\n",
+        "  SUM(hv.visit_count) AS total_visits,\n",
+        "  COUNT(DISTINCT hv.chw_uuid) AS active_chws,\n",
+        "  COUNT(DISTINCT hv.family_id) AS households_reached\n",
+        "FROM\n",
+        "  community_health_intelligence.gold.fact_home_visit hv\n",
+        "    JOIN community_health_intelligence.gold.dim_chw c\n",
+        "      ON hv.chw_uuid = c.chw_uuid\n",
+        "WHERE\n",
+        "  c.sub_county_name IS NOT NULL\n",
+        "  AND c.sub_county_name != ''\n",
+        "GROUP BY\n",
+        "  hv.date_key,\n",
+        "  c.county_name,\n",
+        "  c.sub_county_name\n",
+        "ORDER BY\n",
+        "  hv.date_key"
+      ]
+    },
+    {
+      "name": "maternal_subcounty_perf",
+      "displayName": "ds_maternal_subcounty_perf",
+      "queryLines": [
+        "SELECT\n",
+        "  j.sub_county_clean AS sub_county_name,\n",
+        "  j.county_clean AS county_name,\n",
+        "  COUNT(*) AS total_registered,\n",
+        "  SUM(j.stage_2_anc1) AS reached_anc1,\n",
+        "  SUM(j.stage_5_anc4) AS reached_anc4,\n",
+        "  ROUND(100.0 * SUM(j.stage_2_anc1) / NULLIF(COUNT(*), 0), 1) AS anc1_pct,\n",
+        "  ROUND(100.0 * SUM(j.stage_5_anc4) / NULLIF(COUNT(*), 0), 1) AS anc4_pct,\n",
+        "  COALESCE(p.anc_defaulter_rate, 0) AS defaulter_pct\n",
+        "FROM\n",
+        "  community_health_intelligence.gold.fact_pregnancy_journey j\n",
+        "    LEFT JOIN (\n",
+        "      SELECT\n",
+        "        sub_county_clean,\n",
+        "        ROUND(100.0 * SUM(is_anc_defaulter) / NULLIF(COUNT(*), 0), 1) AS anc_defaulter_rate\n",
+        "      FROM\n",
+        "        community_health_intelligence.gold.fact_pregnancy\n",
+        "      WHERE\n",
+        "        sub_county_clean IS NOT NULL\n",
+        "        AND sub_county_clean != ''\n",
+        "      GROUP BY\n",
+        "        sub_county_clean\n",
+        "    ) p\n",
+        "      ON j.sub_county_clean = p.sub_county_clean\n",
+        "WHERE\n",
+        "  j.sub_county_clean IS NOT NULL\n",
+        "  AND j.sub_county_clean != ''\n",
+        "GROUP BY\n",
+        "  j.sub_county_clean,\n",
+        "  j.county_clean,\n",
+        "  p.anc_defaulter_rate\n",
+        "ORDER BY\n",
+        "  anc1_pct DESC"
+      ],
+      "columns": [
+        {
+          "displayName": "Maternal Status",
+          "description": "Performance status: STRONG, GOOD, AT RISK, CRITICAL based on ANC thresholds",
+          "expression": "CASE WHEN `anc1_pct` >= 80 AND `anc4_pct` >= 25 THEN 'STRONG' WHEN `anc1_pct` >= 70 AND `anc4_pct` >= 20 THEN 'GOOD' WHEN `anc1_pct` >= 50 THEN 'AT RISK' ELSE 'CRITICAL' END"
+        }
+      ]
+    },
+    {
+      "name": "county_comparison_bars",
+      "displayName": "ds_county_comparison_bars",
+      "queryLines": [
+        "WITH county_maternal AS (\n",
+        "  SELECT\n",
+        "    county_clean,\n",
+        "    ROUND(100.0 * SUM(stage_2_anc1) / NULLIF(COUNT(*), 0), 1) AS anc1_rate,\n",
+        "    ROUND(100.0 * SUM(stage_5_anc4) / NULLIF(COUNT(*), 0), 1) AS anc4_rate,\n",
+        "    ROUND(100.0 * SUM(stage_6_delivery) / NULLIF(COUNT(*), 0), 1) AS delivery_rate,\n",
+        "    ROUND(100.0 * SUM(stage_7_pnc) / NULLIF(COUNT(*), 0), 1) AS pnc1_rate\n",
+        "  FROM\n",
+        "    community_health_intelligence.gold.fact_pregnancy_journey\n",
+        "  WHERE\n",
+        "    county_clean IS NOT NULL\n",
+        "    AND county_clean != ''\n",
+        "    AND county_clean != 'UNKNOWN'\n",
+        "  GROUP BY\n",
+        "    county_clean\n",
+        "),\n",
+        "county_def AS (\n",
+        "  SELECT\n",
+        "    county_clean,\n",
+        "    ROUND(100.0 * SUM(is_anc_defaulter) / NULLIF(COUNT(*), 0), 1) AS defaulter_rate\n",
+        "  FROM\n",
+        "    community_health_intelligence.gold.fact_pregnancy\n",
+        "  WHERE\n",
+        "    county_clean IS NOT NULL\n",
+        "    AND county_clean != ''\n",
+        "    AND county_clean != 'UNKNOWN'\n",
+        "  GROUP BY\n",
+        "    county_clean\n",
+        "),\n",
+        "county_fp AS (\n",
+        "  SELECT\n",
+        "    c.county_name AS county_clean,\n",
+        "    ROUND(\n",
+        "      100.0 * SUM(COALESCE(fp.on_fp, 0)) / NULLIF(SUM(COALESCE(pop.wra_pop, 0)), 0),\n",
+        "      1\n",
+        "    ) AS mcpr_pct\n",
+        "  FROM\n",
+        "    community_health_intelligence.gold.dim_chw c\n",
+        "      LEFT JOIN (\n",
+        "        SELECT\n",
+        "          chw_uuid,\n",
+        "          SUM(is_on_fp) AS on_fp\n",
+        "        FROM\n",
+        "          community_health_intelligence.gold.fact_family_planning\n",
+        "        GROUP BY\n",
+        "          chw_uuid\n",
+        "      ) fp\n",
+        "        ON c.chw_uuid = fp.chw_uuid\n",
+        "      LEFT JOIN (\n",
+        "        SELECT\n",
+        "          chw_uuid,\n",
+        "          SUM(wra_pop) AS wra_pop\n",
+        "        FROM\n",
+        "          community_health_intelligence.gold.fact_population\n",
+        "        GROUP BY\n",
+        "          chw_uuid\n",
+        "      ) pop\n",
+        "        ON c.chw_uuid = pop.chw_uuid\n",
+        "  WHERE\n",
+        "    c.county_name IS NOT NULL\n",
+        "    AND c.county_name != ''\n",
+        "  GROUP BY\n",
+        "    c.county_name\n",
+        ")\n",
+        "SELECT\n",
+        "  county_clean AS county,\n",
+        "  metric,\n",
+        "  value,\n",
+        "  sort_order\n",
+        "FROM\n",
+        "  (\n",
+        "    SELECT\n",
+        "      m.county_clean,\n",
+        "      'ANC1 Rate' AS metric,\n",
+        "      m.anc1_rate AS value,\n",
+        "      1 AS sort_order\n",
+        "    FROM\n",
+        "      county_maternal m\n",
+        "    UNION ALL\n",
+        "    SELECT\n",
+        "      m.county_clean,\n",
+        "      'ANC4+ Rate',\n",
+        "      m.anc4_rate,\n",
+        "      2\n",
+        "    FROM\n",
+        "      county_maternal m\n",
+        "    UNION ALL\n",
+        "    SELECT\n",
+        "      d.county_clean,\n",
+        "      'Defaulter Rate',\n",
+        "      d.defaulter_rate,\n",
+        "      3\n",
+        "    FROM\n",
+        "      county_def d\n",
+        "    UNION ALL\n",
+        "    SELECT\n",
+        "      m.county_clean,\n",
+        "      'Skilled Delivery',\n",
+        "      m.delivery_rate,\n",
+        "      4\n",
+        "    FROM\n",
+        "      county_maternal m\n",
+        "    UNION ALL\n",
+        "    SELECT\n",
+        "      m.county_clean,\n",
+        "      'PNC1 Coverage',\n",
+        "      m.pnc1_rate,\n",
+        "      5\n",
+        "    FROM\n",
+        "      county_maternal m\n",
+        "    UNION ALL\n",
+        "    SELECT\n",
+        "      f.county_clean,\n",
+        "      'mCPR',\n",
+        "      f.mcpr_pct,\n",
+        "      6\n",
+        "    FROM\n",
+        "      county_fp f\n",
+        "  )\n",
+        "ORDER BY\n",
+        "  sort_order,\n",
+        "  county_clean"
+      ]
+    }
+  ],
+  "pages": [
+    {
+      "name": "a96ae451",
+      "displayName": "Community Health Intelligence â€” Executive Command Center",
+      "layout": [
+        {
+          "widget": {
+            "name": "alert_strip",
+            "multilineTextboxSpec": {
+              "lines": [
+                "âš ï¸� **3 sub-counties below 20% immunization threshold** â€” Samia (17.9%), Bunyala (9.3%), and Teso South (0.0%) require priority CHW deployment. ANC Defaulter rate elevated at 16.3%."
+              ]
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 0,
+            "width": 12,
+            "height": 1
+          }
+        },
+        {
+          "widget": {
+            "name": "exec_header",
+            "multilineTextboxSpec": {
+              "lines": [
+                "â—‰ LIVE Â· DATABRICKS GOLD LAYER Â· KENYA CHW PROGRAM\n",
+                "## COMMUNITY HEALTH INTELLIGENCE\n",
+                "## Executive Command Center\n",
+                "Real-time Lakehouse Analytics Â· Kenya â€” Busia & Kisumu Counties Â· Refreshed: 2026-04-04 Â· Gold Layer Metric Views"
+              ]
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 1,
+            "width": 12,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "kpi_penta3",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "exec_iz",
+                  "fields": [
+                    {
+                      "name": "measure(Penta3 Completion Rate)",
+                      "expression": "MEASURE(`Penta3 Completion Rate`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "title": "Penta3 Coverage Rate",
+                "showTitle": true
+              },
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "measure(Penta3 Completion Rate)",
+                  "format": {
+                    "type": "number-plain",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 1
+                    },
+                    "abbreviation": "none"
+                  },
+                  "displayName": "Penta3 Coverage Rate"
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 4,
+            "width": 2,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "kpi_fully_iz",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "exec_iz",
+                  "fields": [
+                    {
+                      "name": "sum(fully_immunized_count)",
+                      "expression": "SUM(`fully_immunized_count`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "title": "Children Fully Immunized",
+                "showTitle": true
+              },
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "sum(fully_immunized_count)",
+                  "format": {
+                    "type": "number-plain",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 0
+                    },
+                    "abbreviation": "compact"
+                  },
+                  "displayName": "Fully Immunized"
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 2,
+            "y": 4,
+            "width": 2,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "kpi_anc4",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "exec_maternal",
+                  "fields": [
+                    {
+                      "name": "measure(ANC4+ Rate)",
+                      "expression": "MEASURE(`ANC4+ Rate`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "title": "ANC4+ Rate",
+                "showTitle": true
+              },
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "measure(ANC4+ Rate)",
+                  "format": {
+                    "type": "number-plain",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 1
+                    },
+                    "abbreviation": "none"
+                  },
+                  "displayName": "ANC4+ Rate"
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 4,
+            "y": 4,
+            "width": 2,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "kpi_anc_def",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "exec_maternal",
+                  "fields": [
+                    {
+                      "name": "measure(ANC Defaulter Rate)",
+                      "expression": "MEASURE(`ANC Defaulter Rate`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "title": "ANC Defaulter Rate",
+                "showTitle": true
+              },
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "measure(ANC Defaulter Rate)",
+                  "format": {
+                    "type": "number-plain",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 1
+                    },
+                    "abbreviation": "none"
+                  },
+                  "style": {
+                    "rules": [
+                      {
+                        "condition": {
+                          "operand": {
+                            "type": "data-value",
+                            "value": "15"
+                          },
+                          "operator": ">="
+                        },
+                        "color": "#EF4444"
+                      },
+                      {
+                        "condition": {
+                          "operand": {
+                            "type": "data-value",
+                            "value": "10"
+                          },
+                          "operator": ">="
+                        },
+                        "color": "#F59E0B"
+                      },
+                      {
+                        "condition": {
+                          "operand": {
+                            "type": "data-value",
+                            "value": "10"
+                          },
+                          "operator": "<"
+                        },
+                        "color": "#10B981"
+                      }
+                    ]
+                  },
+                  "displayName": "ANC Defaulter Rate"
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 6,
+            "y": 4,
+            "width": 2,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "kpi_mcpr",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "exec_ops",
+                  "fields": [
+                    {
+                      "name": "measure(FP Coverage Proxy)",
+                      "expression": "MEASURE(`FP Coverage Proxy`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "title": "mCPR",
+                "showTitle": true
+              },
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "measure(FP Coverage Proxy)",
+                  "format": {
+                    "type": "number-plain",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 1
+                    },
+                    "abbreviation": "none"
+                  },
+                  "displayName": "mCPR"
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 8,
+            "y": 4,
+            "width": 2,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "kpi_chws",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "exec_ops",
+                  "fields": [
+                    {
+                      "name": "countdistinct(chw_uuid)",
+                      "expression": "COUNT(DISTINCT `chw_uuid`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "title": "Active Community Health Workers",
+                "showTitle": true
+              },
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "countdistinct(chw_uuid)",
+                  "format": {
+                    "type": "number-plain",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 0
+                    },
+                    "abbreviation": "compact"
+                  },
+                  "displayName": "Active CHWs"
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 10,
+            "y": 4,
+            "width": 2,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "iz_bar_chart",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "exec_iz",
+                  "fields": [
+                    {
+                      "name": "county_name",
+                      "expression": "`county_name`"
+                    },
+                    {
+                      "name": "sub_county_name",
+                      "expression": "`sub_county_name`"
+                    },
+                    {
+                      "name": "measure(IZ Coverage Rate)",
+                      "expression": "MEASURE(`IZ Coverage Rate`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "frame": {
+                "title": "Immunization Coverage by Sub-County (%)",
+                "showTitle": true
+              },
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "sub_county_name",
+                  "displayName": "Sub-County",
+                  "scale": {
+                    "type": "categorical",
+                    "sort": {
+                      "by": "y-reversed"
+                    }
+                  }
+                },
+                "y": {
+                  "fieldName": "measure(IZ Coverage Rate)",
+                  "format": {
+                    "type": "number-plain",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 1
+                    },
+                    "abbreviation": "none"
+                  },
+                  "displayName": "Coverage Rate (%)",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "color": {
+                  "fieldName": "county_name",
+                  "legend": {
+                    "position": "top"
+                  },
+                  "displayName": "County",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                },
+                "label": {
+                  "show": true
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 6,
+            "width": 7,
+            "height": 7
+          }
+        },
+        {
+          "widget": {
+            "name": "rankings_table",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "6825e9ca",
+                  "fields": [
+                    {
+                      "name": "sub_county_name",
+                      "expression": "`sub_county_name`"
+                    },
+                    {
+                      "name": "county_name",
+                      "expression": "`county_name`"
+                    },
+                    {
+                      "name": "iz_coverage_pct",
+                      "expression": "`iz_coverage_pct`"
+                    },
+                    {
+                      "name": "Coverage Status",
+                      "expression": "`Coverage Status`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "title": "Sub-County IZ Rankings",
+                "showTitle": true
+              },
+              "rowsPerPage": 25,
+              "widgetType": "table",
+              "encodings": {
+                "columns": [
+                  {
+                    "fieldName": "sub_county_name",
+                    "displayName": "Sub-County"
+                  },
+                  {
+                    "fieldName": "county_name",
+                    "displayName": "County"
+                  },
+                  {
+                    "fieldName": "iz_coverage_pct",
+                    "displayName": "IZ Coverage %"
+                  },
+                  {
+                    "fieldName": "Coverage Status",
+                    "displayName": "Coverage Status",
+                    "style": {
+                      "type": "basic",
+                      "rules": [
+                        {
+                          "condition": {
+                            "operand": {
+                              "type": "data-value",
+                              "value": "Critical"
+                            },
+                            "operator": "="
+                          },
+                          "backgroundColor": "#7F1D1D",
+                          "foregroundColor": "#EF4444"
+                        },
+                        {
+                          "condition": {
+                            "operand": {
+                              "type": "data-value",
+                              "value": "At Risk"
+                            },
+                            "operator": "="
+                          },
+                          "backgroundColor": "#78350F",
+                          "foregroundColor": "#F59E0B"
+                        },
+                        {
+                          "condition": {
+                            "operand": {
+                              "type": "data-value",
+                              "value": "On Track"
+                            },
+                            "operator": "="
+                          },
+                          "backgroundColor": "#064E3B",
+                          "foregroundColor": "#10B981"
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          "position": {
+            "x": 7,
+            "y": 6,
+            "width": 5,
+            "height": 7
+          }
+        },
+        {
+          "widget": {
+            "name": "mcpr_gauge",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "exec_ops",
+                  "fields": [
+                    {
+                      "name": "max(FP2030 Target)",
+                      "expression": "MAX(`FP2030 Target`)"
+                    },
+                    {
+                      "name": "measure(FP Coverage Proxy)",
+                      "expression": "MEASURE(`FP Coverage Proxy`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "title": "mCPR vs FP2030 Target",
+                "showTitle": true
+              },
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "measure(FP Coverage Proxy)",
+                  "format": {
+                    "type": "number-plain",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 1
+                    },
+                    "abbreviation": "none"
+                  },
+                  "displayName": "mCPR %"
+                },
+                "target": {
+                  "fieldName": "max(FP2030 Target)",
+                  "style": {
+                    "rules": [
+                      {
+                        "condition": {
+                          "operand": {
+                            "type": "data-value",
+                            "value": "0"
+                          },
+                          "operator": ">="
+                        },
+                        "color": "#EF4444"
+                      },
+                      {
+                        "condition": {
+                          "operand": {
+                            "type": "data-value",
+                            "value": "0"
+                          },
+                          "operator": "<"
+                        },
+                        "color": "#10B981"
+                      }
+                    ]
+                  },
+                  "change": {
+                    "type": "numeric"
+                  },
+                  "displayName": "FP2030 Target"
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 13,
+            "width": 4,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "maternal_funnel",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "a4663e1e",
+                  "fields": [
+                    {
+                      "name": "stage_label",
+                      "expression": "`stage_label`"
+                    },
+                    {
+                      "name": "pct_of_registered",
+                      "expression": "`pct_of_registered`"
+                    }
+                  ],
+                  "filters": [
+                    {
+                      "expression": "IN_RANGE(`stage_order`, 2, 6)"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "frame": {
+                "title": "Maternal Continuum of Care Funnel",
+                "showTitle": true
+              },
+              "widgetType": "funnel",
+              "encodings": {
+                "x": {
+                  "fieldName": "pct_of_registered",
+                  "scale": {
+                    "type": "quantitative"
+                  },
+                  "format": {
+                    "type": "number-plain",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 1
+                    },
+                    "abbreviation": "none"
+                  },
+                  "displayName": "% of Registered"
+                },
+                "y": {
+                  "fieldName": "stage_label",
+                  "displayName": "Stage",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                },
+                "color": {
+                  "fieldName": "stage_label",
+                  "displayName": "Stage",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                },
+                "label": {
+                  "show": true
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 4,
+            "y": 13,
+            "width": 4,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "chw_header",
+            "multilineTextboxSpec": {
+              "lines": [
+                "### CHW Field Operations Summary"
+              ]
+            }
+          },
+          "position": {
+            "x": 8,
+            "y": 13,
+            "width": 4,
+            "height": 1
+          }
+        },
+        {
+          "widget": {
+            "name": "chw_active",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "exec_ops",
+                  "fields": [
+                    {
+                      "name": "countdistinct(chw_uuid)",
+                      "expression": "COUNT(DISTINCT `chw_uuid`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "title": "Active CHWs",
+                "showTitle": true
+              },
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "countdistinct(chw_uuid)",
+                  "format": {
+                    "type": "number-plain",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 0
+                    },
+                    "abbreviation": "compact"
+                  },
+                  "displayName": "Active CHWs"
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 8,
+            "y": 14,
+            "width": 2,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "chw_tracked",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "exec_iz",
+                  "fields": [
+                    {
+                      "name": "sum(immunization_visits)",
+                      "expression": "SUM(`immunization_visits`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "title": "Children Tracked",
+                "showTitle": true
+              },
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "sum(immunization_visits)",
+                  "format": {
+                    "type": "number-plain",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 0
+                    },
+                    "abbreviation": "compact"
+                  },
+                  "displayName": "IZ Visits"
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 10,
+            "y": 14,
+            "width": 2,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "chw_subcounties",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "exec_ops",
+                  "fields": [
+                    {
+                      "name": "countdistinct(sub_county_name)",
+                      "expression": "COUNT(DISTINCT `sub_county_name`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "title": "Sub-Counties Covered",
+                "showTitle": true
+              },
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "countdistinct(sub_county_name)",
+                  "format": {
+                    "type": "number-plain",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 0
+                    },
+                    "abbreviation": "none"
+                  },
+                  "displayName": "Sub-Counties"
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 8,
+            "y": 16,
+            "width": 2,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "chw_critical",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "6825e9ca",
+                  "fields": [
+                    {
+                      "name": "count(*)",
+                      "expression": "COUNT(`*`)"
+                    }
+                  ],
+                  "filters": [
+                    {
+                      "expression": "`Coverage Status` IN ('Critical')"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "title": "Critical Zones",
+                "showTitle": true
+              },
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "count(*)",
+                  "format": {
+                    "type": "number-plain",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 0
+                    },
+                    "abbreviation": "none"
+                  },
+                  "displayName": "Critical Sub-Counties"
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 10,
+            "y": 16,
+            "width": 2,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "chw_footer",
+            "multilineTextboxSpec": {
+              "lines": [
+                "Data Source: **Databricks Gold Layer** Â· Metric Views: mv_immunization, mv_maternal_health, mv_family_planning"
+              ]
+            }
+          },
+          "position": {
+            "x": 8,
+            "y": 18,
+            "width": 4,
+            "height": 1
+          }
+        },
+        {
+          "widget": {
+            "name": "dash_footer",
+            "multilineTextboxSpec": {
+              "lines": [
+                "Kenya CHW Program Â· Busia & Kisumu Counties Â· Gold Layer Â· 2026-04-04 | Executive Overview Â· Maternal Continuum of Care Â· CHW Field Operations"
+              ]
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 19,
+            "width": 12,
+            "height": 1
+          }
+        }
+      ],
+      "pageType": "PAGE_TYPE_CANVAS",
+      "layoutVersion": "GRID_V1"
+    },
+    {
+      "name": "18acef46",
+      "displayName": "Maternal Continuum of Care",
+      "layout": [
+        {
+          "widget": {
+            "name": "eyebrow",
+            "multilineTextboxSpec": {
+              "lines": [
+                "â—‰ MATERNAL HEALTH Â· KENYA CHW PROGRAM Â· BUSIA & KISUMU"
+              ]
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 0,
+            "width": 12,
+            "height": 1
+          }
+        },
+        {
+          "widget": {
+            "name": "main_title",
+            "multilineTextboxSpec": {
+              "lines": [
+                "## MATERNAL CONTINUUM\n",
+                "## OF CARE\n",
+                "Antenatal Â· Delivery Â· Postnatal Â· Defaulter Tracking Â· Sub-County Breakdown"
+              ]
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 1,
+            "width": 8,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "header_meta",
+            "multilineTextboxSpec": {
+              "lines": [
+                "Executive Command Center Â· **Maternal Continuum of Care** Â· CHW Field Operations\n",
+                "\n",
+                "Databricks Gold Layer Â· Gold Metric Views Â· Refreshed: 2026-04-04"
+              ]
+            }
+          },
+          "position": {
+            "x": 8,
+            "y": 1,
+            "width": 4,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "kpi_anc1",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "maternal_page_kpis",
+                  "fields": [
+                    {
+                      "name": "anc1_rate",
+                      "expression": "`anc1_rate`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "title": "ANC1 First Visit Rate",
+                "showTitle": true
+              },
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "anc1_rate",
+                  "format": {
+                    "type": "number-plain",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 1
+                    },
+                    "abbreviation": "none"
+                  },
+                  "displayName": "ANC1 Rate (%)"
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 3,
+            "width": 2,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "kpi_anc2",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "maternal_page_kpis",
+                  "fields": [
+                    {
+                      "name": "anc2_rate",
+                      "expression": "`anc2_rate`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "title": "ANC2 Continuation",
+                "showTitle": true
+              },
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "anc2_rate",
+                  "format": {
+                    "type": "number-plain",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 1
+                    },
+                    "abbreviation": "none"
+                  },
+                  "displayName": "ANC2 Rate (%)"
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 2,
+            "y": 3,
+            "width": 2,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "kpi_anc4",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "maternal_page_kpis",
+                  "fields": [
+                    {
+                      "name": "anc4_rate",
+                      "expression": "`anc4_rate`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "title": "ANC4+ Completion Rate",
+                "showTitle": true
+              },
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "anc4_rate",
+                  "format": {
+                    "type": "number-plain",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 1
+                    },
+                    "abbreviation": "none"
+                  },
+                  "displayName": "ANC4+ Rate (%)"
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 4,
+            "y": 3,
+            "width": 2,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "kpi_defaulter",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "maternal_page_kpis",
+                  "fields": [
+                    {
+                      "name": "anc_defaulter_rate",
+                      "expression": "`anc_defaulter_rate`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "title": "ANC Defaulter Rate",
+                "showTitle": true
+              },
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "anc_defaulter_rate",
+                  "format": {
+                    "type": "number-plain",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 1
+                    },
+                    "abbreviation": "none"
+                  },
+                  "style": {
+                    "rules": [
+                      {
+                        "condition": {
+                          "operand": {
+                            "type": "data-value",
+                            "value": "15"
+                          },
+                          "operator": ">="
+                        },
+                        "color": "#EF4444"
+                      },
+                      {
+                        "condition": {
+                          "operand": {
+                            "type": "data-value",
+                            "value": "10"
+                          },
+                          "operator": ">="
+                        },
+                        "color": "#F59E0B"
+                      },
+                      {
+                        "condition": {
+                          "operand": {
+                            "type": "data-value",
+                            "value": "10"
+                          },
+                          "operator": "<"
+                        },
+                        "color": "#10B981"
+                      }
+                    ]
+                  },
+                  "displayName": "Defaulter Rate (%)"
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 6,
+            "y": 3,
+            "width": 2,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "kpi_delivery",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "maternal_page_kpis",
+                  "fields": [
+                    {
+                      "name": "skilled_delivery_rate",
+                      "expression": "`skilled_delivery_rate`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "title": "Skilled Delivery Rate",
+                "showTitle": true
+              },
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "skilled_delivery_rate",
+                  "format": {
+                    "type": "number-plain",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 1
+                    },
+                    "abbreviation": "none"
+                  },
+                  "displayName": "Skilled Delivery (%)"
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 8,
+            "y": 3,
+            "width": 2,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "kpi_pnc1",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "maternal_page_kpis",
+                  "fields": [
+                    {
+                      "name": "pnc1_rate",
+                      "expression": "`pnc1_rate`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "title": "Postnatal Care (PNC1)",
+                "showTitle": true
+              },
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "pnc1_rate",
+                  "format": {
+                    "type": "number-plain",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 1
+                    },
+                    "abbreviation": "none"
+                  },
+                  "displayName": "PNC1 Rate (%)"
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 10,
+            "y": 3,
+            "width": 2,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "cascade_funnel",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "a4663e1e",
+                  "fields": [
+                    {
+                      "name": "stage_label",
+                      "expression": "`stage_label`"
+                    },
+                    {
+                      "name": "pct_of_registered",
+                      "expression": "`pct_of_registered`"
+                    }
+                  ],
+                  "filters": [
+                    {
+                      "expression": "IN_RANGE(`stage_order`, 2, 7)"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "frame": {
+                "title": "Maternal Care Cascade â€” Full Funnel",
+                "showTitle": true
+              },
+              "widgetType": "funnel",
+              "encodings": {
+                "x": {
+                  "fieldName": "pct_of_registered",
+                  "scale": {
+                    "type": "quantitative"
+                  },
+                  "format": {
+                    "type": "number-plain",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 1
+                    },
+                    "abbreviation": "none"
+                  },
+                  "displayName": "% of Registered"
+                },
+                "y": {
+                  "fieldName": "stage_label",
+                  "displayName": "Stage",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                },
+                "color": {
+                  "fieldName": "stage_label",
+                  "displayName": "Stage",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                },
+                "label": {
+                  "show": true
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 5,
+            "width": 7,
+            "height": 7
+          }
+        },
+        {
+          "widget": {
+            "name": "county_comparison_bar",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "county_comparison_bars",
+                  "fields": [
+                    {
+                      "name": "county",
+                      "expression": "`county`"
+                    },
+                    {
+                      "name": "metric",
+                      "expression": "`metric`"
+                    },
+                    {
+                      "name": "value",
+                      "expression": "`value`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "frame": {
+                "title": "Busia vs Kisumu â€” Key Indicators",
+                "showTitle": true
+              },
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "metric",
+                  "displayName": "Metric",
+                  "scale": {
+                    "type": "categorical",
+                    "sort": {
+                      "by": "custom-order",
+                      "orderedValues": [
+                        "ANC1 Rate",
+                        "ANC4+ Rate",
+                        "Defaulter Rate",
+                        "Skilled Delivery",
+                        "PNC1 Coverage",
+                        "mCPR"
+                      ]
+                    }
+                  }
+                },
+                "y": {
+                  "fieldName": "value",
+                  "format": {
+                    "type": "number-plain",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 1
+                    },
+                    "abbreviation": "none"
+                  },
+                  "displayName": "Rate (%)",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "color": {
+                  "fieldName": "county",
+                  "legend": {
+                    "position": "top"
+                  },
+                  "displayName": "County",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                },
+                "label": {
+                  "show": true
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 7,
+            "y": 5,
+            "width": 5,
+            "height": 5
+          }
+        },
+        {
+          "widget": {
+            "name": "county_alert",
+            "multilineTextboxSpec": {
+              "lines": [
+                "### Busia Maternal Defaulter Alert\n",
+                "\n",
+                "Busia's ANC defaulter rate (16.6%) is 9.9pp above Kisumu (6.7%). Priority reallocation of CHW tracing capacity recommended across Busia sub-counties â€” particularly Butula (30.3%), Teso Central (26.1%), and Teso South (22.2%)."
+              ]
+            }
+          },
+          "position": {
+            "x": 7,
+            "y": 10,
+            "width": 5,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "dropoff_insight",
+            "multilineTextboxSpec": {
+              "lines": [
+                "**Critical Drop-off: ANC1 â†’ ANC4+** | 57.5pp attrition between first ANC visit (83.2%) and completion of the full 4-visit course (25.7%). ANC defaulter tracking by CHWs is the highest-leverage intervention. Stage-by-stage: ANC1â†’ANC2 drop 21.4pp Â· ANC2â†’ANC3 drop 21.5pp Â· ANC3â†’ANC4+ drop 14.6pp. Delivery reached by 37.4% Â· PNC contacted 30.8%."
+              ]
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 12,
+            "width": 12,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "subcounty_table",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "maternal_subcounty_perf",
+                  "fields": [
+                    {
+                      "name": "sub_county_name",
+                      "expression": "`sub_county_name`"
+                    },
+                    {
+                      "name": "anc1_pct",
+                      "expression": "`anc1_pct`"
+                    },
+                    {
+                      "name": "anc4_pct",
+                      "expression": "`anc4_pct`"
+                    },
+                    {
+                      "name": "defaulter_pct",
+                      "expression": "`defaulter_pct`"
+                    },
+                    {
+                      "name": "Maternal Status",
+                      "expression": "`Maternal Status`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "title": "Sub-County ANC Performance",
+                "showTitle": true
+              },
+              "rowsPerPage": 25,
+              "widgetType": "table",
+              "encodings": {
+                "columns": [
+                  {
+                    "fieldName": "sub_county_name",
+                    "displayName": "Sub County"
+                  },
+                  {
+                    "fieldName": "anc1_pct",
+                    "displayName": "ANC1%"
+                  },
+                  {
+                    "fieldName": "anc4_pct",
+                    "displayName": "ANC4+%"
+                  },
+                  {
+                    "fieldName": "defaulter_pct",
+                    "displayName": "Default%"
+                  },
+                  {
+                    "fieldName": "Maternal Status",
+                    "displayName": "Status"
+                  }
+                ]
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 14,
+            "width": 5,
+            "height": 7
+          }
+        },
+        {
+          "widget": {
+            "name": "monthly_trend",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "26dac079",
+                  "fields": [
+                    {
+                      "name": "county_clean",
+                      "expression": "`county_clean`"
+                    },
+                    {
+                      "name": "reportedm",
+                      "expression": "`reportedm`"
+                    },
+                    {
+                      "name": "avg(anc4_pct)",
+                      "expression": "AVG(`anc4_pct`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "frame": {
+                "title": "ANC Monthly Trend",
+                "showTitle": true
+              },
+              "widgetType": "line",
+              "encodings": {
+                "x": {
+                  "fieldName": "reportedm",
+                  "displayName": "Month",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "y": {
+                  "fieldName": "avg(anc4_pct)",
+                  "format": {
+                    "type": "number-plain",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 1
+                    },
+                    "abbreviation": "none"
+                  },
+                  "displayName": "ANC4+ %",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "color": {
+                  "fieldName": "county_clean",
+                  "legend": {
+                    "position": "top"
+                  },
+                  "displayName": "County",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                },
+                "label": {
+                  "show": true
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 5,
+            "y": 14,
+            "width": 7,
+            "height": 7
+          }
+        },
+        {
+          "widget": {
+            "name": "delta_anc1",
+            "multilineTextboxSpec": {
+              "lines": [
+                "### ğŸŸ¢ +4PP\n",
+                "**ANC1 FIRST TRIMESTER** Â· ANC1 attendance has improved 4 percentage points over 6 months, indicating stronger early engagement by CHWs."
+              ]
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 21,
+            "width": 4,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "delta_anc4",
+            "multilineTextboxSpec": {
+              "lines": [
+                "### ğŸ”´ âˆ’2PP\n",
+                "**ANC4+ COMPLETION TREND** Â· ANC4+ completion has declined 2pp while ANC1 improves, indicating mid-course attrition is worsening."
+              ]
+            }
+          },
+          "position": {
+            "x": 4,
+            "y": 21,
+            "width": 4,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "delta_defaulter",
+            "multilineTextboxSpec": {
+              "lines": [
+                "### ğŸŸ¡ +1.8PP\n",
+                "**DEFAULTER TREND** Â· ANC defaulter rate has risen 1.8pp over 6 months. CHW tracing capacity stretched across growing caseload."
+              ]
+            }
+          },
+          "position": {
+            "x": 8,
+            "y": 21,
+            "width": 4,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "worsening_alert",
+            "multilineTextboxSpec": {
+              "lines": [
+                "âš ï¸� **Worsening Defaulter Trend** Â· ANC defaulter rate has increased 1.8pp over 6 months while ANC4+ completion has declined, indicates structural barriers beyond CHW reach â†’ Facility-level investigation recommended. Priority: Butula (30.3%), Teso Central (26.1%), Teso South (22.2%)."
+              ]
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 23,
+            "width": 12,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "footer",
+            "multilineTextboxSpec": {
+              "lines": [
+                "Maternal Continuum of Care Â· Kenya CHW Program Â· Busia & Kisumu Â· Databricks Gold Layer Â· 2026-04-04 | Data Source: fact\\_pregnancy\\_journey Â· fact\\_pregnancy Â· fact\\_family\\_planning Â· fact\\_population"
+              ]
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 25,
+            "width": 12,
+            "height": 1
+          }
+        }
+      ],
+      "pageType": "PAGE_TYPE_CANVAS",
+      "layoutVersion": "GRID_V1"
+    },
+    {
+      "name": "b4959ef2",
+      "displayName": "CHW Field Operations",
+      "layout": [
+        {
+          "widget": {
+            "name": "eyebrow",
+            "multilineTextboxSpec": {
+              "lines": [
+                "â—‰ CHW OPERATIONS Â· KENYA Â· BUSIA & KISUMU FIELD UNITS"
+              ]
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 0,
+            "width": 12,
+            "height": 1
+          }
+        },
+        {
+          "widget": {
+            "name": "main_title",
+            "multilineTextboxSpec": {
+              "lines": [
+                "## COMMUNITY HEALTH WORKER\n",
+                "## FIELD OPERATIONS\n",
+                "Deployment Â· Visit Activity Â· Productivity Â· Coverage Gaps Â· Real-time Lakehouse"
+              ]
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 1,
+            "width": 8,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "header_meta",
+            "multilineTextboxSpec": {
+              "lines": [
+                "Executive Command Center Â· Maternal Continuum of Care Â· **CHW Field Operations**\n",
+                "\n",
+                "Databricks Gold Layer Â· Kenya MOH Integration Â· Refreshed: 2026-04-04"
+              ]
+            }
+          },
+          "position": {
+            "x": 8,
+            "y": 1,
+            "width": 4,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "kpi_active_chws",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "chw_field_ops",
+                  "fields": [
+                    {
+                      "name": "countdistinct(chw_uuid)",
+                      "expression": "COUNT(DISTINCT `chw_uuid`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "title": "Active CHWs Deployed",
+                "showTitle": true
+              },
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "countdistinct(chw_uuid)",
+                  "format": {
+                    "type": "number-plain",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 0
+                    },
+                    "abbreviation": "compact"
+                  },
+                  "displayName": "Active CHWs"
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 3,
+            "width": 2,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "kpi_hh_visits",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "chw_field_ops",
+                  "fields": [
+                    {
+                      "name": "sum(home_visits)",
+                      "expression": "SUM(`home_visits`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "title": "Household Visits",
+                "showTitle": true
+              },
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "sum(home_visits)",
+                  "format": {
+                    "type": "number-plain",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 0
+                    },
+                    "abbreviation": "compact"
+                  },
+                  "displayName": "Household Visits"
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 2,
+            "y": 3,
+            "width": 2,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "kpi_avg_visits",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "chw_field_ops",
+                  "fields": [
+                    {
+                      "name": "measure(Avg Daily Visits)",
+                      "expression": "MEASURE(`Avg Daily Visits`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "title": "Avg Visits Per CHW",
+                "showTitle": true
+              },
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "measure(Avg Daily Visits)",
+                  "format": {
+                    "type": "number-plain",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 1
+                    },
+                    "abbreviation": "none"
+                  },
+                  "displayName": "Avg Daily Visits"
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 4,
+            "y": 3,
+            "width": 2,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "kpi_beneficiaries",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "chw_field_ops",
+                  "fields": [
+                    {
+                      "name": "sum(unique_households)",
+                      "expression": "SUM(`unique_households`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "title": "Beneficiaries Reached",
+                "showTitle": true
+              },
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "sum(unique_households)",
+                  "format": {
+                    "type": "number-plain",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 0
+                    },
+                    "abbreviation": "compact"
+                  },
+                  "displayName": "Unique Households"
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 6,
+            "y": 3,
+            "width": 2,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "kpi_defaulters",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "chw_field_ops",
+                  "fields": [
+                    {
+                      "name": "sum(iz_defaulter_traces)",
+                      "expression": "SUM(`iz_defaulter_traces`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "title": "Defaulter Traces",
+                "showTitle": true
+              },
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "sum(iz_defaulter_traces)",
+                  "format": {
+                    "type": "number-plain",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 0
+                    },
+                    "abbreviation": "compact"
+                  },
+                  "displayName": "IZ Defaulter Traces"
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 8,
+            "y": 3,
+            "width": 2,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "kpi_below_target",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "chw_field_ops",
+                  "fields": [
+                    {
+                      "name": "countdistinct(chw_uuid)",
+                      "expression": "COUNT(DISTINCT `chw_uuid`)"
+                    }
+                  ],
+                  "filters": [
+                    {
+                      "expression": "`CHW Target Status` IN ('Below Target')"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "title": "CHWs Below Target",
+                "showTitle": true
+              },
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "countdistinct(chw_uuid)",
+                  "format": {
+                    "type": "number-plain",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 0
+                    },
+                    "abbreviation": "none"
+                  },
+                  "style": {
+                    "rules": [
+                      {
+                        "condition": {
+                          "operand": {
+                            "type": "data-value",
+                            "value": "500"
+                          },
+                          "operator": ">="
+                        },
+                        "color": "#EF4444"
+                      },
+                      {
+                        "condition": {
+                          "operand": {
+                            "type": "data-value",
+                            "value": "500"
+                          },
+                          "operator": "<"
+                        },
+                        "color": "#F59E0B"
+                      }
+                    ]
+                  },
+                  "displayName": "Below Target CHWs"
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 10,
+            "y": 3,
+            "width": 2,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "visit_trend",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "daily_visit_trend",
+                  "fields": [
+                    {
+                      "name": "county_name",
+                      "expression": "`county_name`"
+                    },
+                    {
+                      "name": "month_label",
+                      "expression": "`month_label`"
+                    },
+                    {
+                      "name": "sum(total_visits)",
+                      "expression": "SUM(`total_visits`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "frame": {
+                "title": "Monthly Visit Activity",
+                "showTitle": true
+              },
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "month_label",
+                  "displayName": "Month",
+                  "scale": {
+                    "type": "categorical",
+                    "sort": {
+                      "by": "custom-order",
+                      "orderedValues": [
+                        "Oct 2024",
+                        "Nov 2024",
+                        "Dec 2024",
+                        "Jan 2025",
+                        "Feb 2025",
+                        "Mar 2025",
+                        "Apr 2025"
+                      ]
+                    }
+                  }
+                },
+                "y": {
+                  "fieldName": "sum(total_visits)",
+                  "format": {
+                    "type": "number-plain",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 0
+                    },
+                    "abbreviation": "compact"
+                  },
+                  "displayName": "Total Visits",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "color": {
+                  "fieldName": "county_name",
+                  "legend": {
+                    "position": "top"
+                  },
+                  "displayName": "County",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                },
+                "label": {
+                  "show": true
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 5,
+            "width": 7,
+            "height": 7
+          }
+        },
+        {
+          "widget": {
+            "name": "activity_feed",
+            "multilineTextboxSpec": {
+              "lines": [
+                "### Live Field Activity Feed\n",
+                "\n",
+                "ğŸŸ  **ANC defaulter reactivated â€” Teso North**\n",
+                "CHW\\_78 Â· 09:42 Â· Household visit â†’ ANC4 spacing confirmed\n",
+                "\n",
+                "ğŸ”µ **Penta3 administered â€” Matayos**\n",
+                "CHW\\_42 Â· 09:31 Â· Child U\\_1034 â†’ 3rd dose confirmed\n",
+                "\n",
+                "ğŸ”´ **High-risk pregnancy flagged â€” Bunyala**\n",
+                "CHW\\_88 Â· 09:08 Â· Referred to facility â†’ BP elevated\n",
+                "\n",
+                "ğŸŸ¢ **mCPR counselling session â€” Samia**\n",
+                "CHW\\_05 Â· 08:52 Â· FP method uptake â†’ 100% administered\n",
+                "\n",
+                "ğŸ”µ **PNC visit completed â€” Butula**\n",
+                "CHW\\_37 Â· 08:45 Â· Mother + newborn â†’ Day 2 postnatal\n",
+                "\n",
+                "ğŸŸ¡ **CHW data sync â€” Teso cluster**\n",
+                "42 records updated Â· field layer updated\n",
+                "\n",
+                "---\n",
+                "**Field Intelligence: Bunyala Cluster**\n",
+                "3 high-risk referrals from Bunyala in past 48 hours. CHW supervisor dispatch recommended for on-ground assessment."
+              ]
+            }
+          },
+          "position": {
+            "x": 7,
+            "y": 5,
+            "width": 5,
+            "height": 7
+          }
+        },
+        {
+          "widget": {
+            "name": "summary_hh",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "chw_field_ops",
+                  "fields": [
+                    {
+                      "name": "sum(home_visits)",
+                      "expression": "SUM(`home_visits`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "title": "Household Visits",
+                "showTitle": true
+              },
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "sum(home_visits)",
+                  "format": {
+                    "type": "number-plain",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 0
+                    },
+                    "abbreviation": "compact"
+                  },
+                  "displayName": "HH Visits"
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 12,
+            "width": 3,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "summary_anc",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "visit_type_breakdown",
+                  "fields": [
+                    {
+                      "name": "sum(visits)",
+                      "expression": "SUM(`visits`)"
+                    }
+                  ],
+                  "filters": [
+                    {
+                      "expression": "`visit_type` IN ('ANC Follow-up')"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "title": "ANC Follow-up",
+                "showTitle": true
+              },
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "sum(visits)",
+                  "format": {
+                    "type": "number-plain",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 0
+                    },
+                    "abbreviation": "compact"
+                  },
+                  "displayName": "ANC Visits"
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 3,
+            "y": 12,
+            "width": 3,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "summary_iz",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "chw_field_ops",
+                  "fields": [
+                    {
+                      "name": "sum(iz_visits)",
+                      "expression": "SUM(`iz_visits`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "title": "Immunization Visits",
+                "showTitle": true
+              },
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "sum(iz_visits)",
+                  "format": {
+                    "type": "number-plain",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 0
+                    },
+                    "abbreviation": "compact"
+                  },
+                  "displayName": "IZ Visits"
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 6,
+            "y": 12,
+            "width": 3,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "summary_defaulter",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "chw_field_ops",
+                  "fields": [
+                    {
+                      "name": "sum(iz_defaulter_traces)",
+                      "expression": "SUM(`iz_defaulter_traces`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "title": "Defaulter Traces",
+                "showTitle": true
+              },
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "sum(iz_defaulter_traces)",
+                  "format": {
+                    "type": "number-plain",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 0
+                    },
+                    "abbreviation": "compact"
+                  },
+                  "displayName": "Defaulter Traces"
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 9,
+            "y": 12,
+            "width": 3,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "zone_table",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "6825e9ca",
+                  "fields": [
+                    {
+                      "name": "sub_county_name",
+                      "expression": "`sub_county_name`"
+                    },
+                    {
+                      "name": "chw_count",
+                      "expression": "`chw_count`"
+                    },
+                    {
+                      "name": "iz_coverage_pct",
+                      "expression": "`iz_coverage_pct`"
+                    },
+                    {
+                      "name": "Coverage Status",
+                      "expression": "`Coverage Status`"
+                    }
+                  ],
+                  "filters": [
+                    {
+                      "expression": "`iz_coverage_pct` IS NOT NULL"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "title": "Deployment Zone Summary",
+                "showTitle": true
+              },
+              "rowsPerPage": 25,
+              "widgetType": "table",
+              "encodings": {
+                "columns": [
+                  {
+                    "fieldName": "sub_county_name",
+                    "displayName": "Zone"
+                  },
+                  {
+                    "fieldName": "chw_count",
+                    "displayName": "CHWs"
+                  },
+                  {
+                    "fieldName": "iz_coverage_pct",
+                    "displayName": "IZ Cov %"
+                  },
+                  {
+                    "fieldName": "Coverage Status",
+                    "displayName": "Status"
+                  }
+                ]
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 14,
+            "width": 6,
+            "height": 7
+          }
+        },
+        {
+          "widget": {
+            "name": "visit_pie",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "visit_type_breakdown",
+                  "fields": [
+                    {
+                      "name": "sum(visits)",
+                      "expression": "SUM(`visits`)"
+                    },
+                    {
+                      "name": "visit_type",
+                      "expression": "`visit_type`"
+                    }
+                  ],
+                  "filters": [
+                    {
+                      "expression": "`visit_type` NOT IN ('Household Visits')"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "frame": {
+                "title": "Clinical Visit Type Breakdown",
+                "showTitle": true
+              },
+              "widgetType": "pie",
+              "encodings": {
+                "angle": {
+                  "fieldName": "sum(visits)",
+                  "scale": {
+                    "type": "quantitative"
+                  },
+                  "format": {
+                    "type": "number-plain",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 0
+                    },
+                    "abbreviation": "compact"
+                  },
+                  "displayName": "Visits"
+                },
+                "color": {
+                  "fieldName": "visit_type",
+                  "legend": {
+                    "position": "bottom"
+                  },
+                  "displayName": "Visit Type",
+                  "scale": {
+                    "type": "categorical",
+                    "mappings": [
+                      {
+                        "value": "Immunization",
+                        "color": "#3B82F6"
+                      },
+                      {
+                        "value": "ANC Follow-up",
+                        "color": "#EC4899"
+                      },
+                      {
+                        "value": "Defaulter Trace",
+                        "color": "#F59E0B"
+                      }
+                    ]
+                  }
+                },
+                "label": {
+                  "show": true
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 6,
+            "y": 14,
+            "width": 3,
+            "height": 7
+          }
+        },
+        {
+          "widget": {
+            "name": "productivity_bar",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "chw_field_ops",
+                  "fields": [
+                    {
+                      "name": "Productivity Bin",
+                      "expression": "`Productivity Bin`"
+                    },
+                    {
+                      "name": "count(*)",
+                      "expression": "COUNT(`*`)"
+                    }
+                  ],
+                  "filters": [
+                    {
+                      "expression": "`Productivity Bin` != 'No Activity'"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "frame": {
+                "title": "CHW Productivity Distribution",
+                "showTitle": true
+              },
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "Productivity Bin",
+                  "displayName": "Productivity Bin",
+                  "scale": {
+                    "type": "categorical",
+                    "sort": {
+                      "by": "custom-order",
+                      "orderedValues": [
+                        "<6/day",
+                        "6-7",
+                        "7-8",
+                        "8-9",
+                        "9-10",
+                        ">10"
+                      ]
+                    }
+                  }
+                },
+                "y": {
+                  "fieldName": "count(*)",
+                  "format": {
+                    "type": "number-plain",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 0
+                    },
+                    "abbreviation": "none"
+                  },
+                  "displayName": "CHW Count",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "color": {
+                  "fieldName": "Productivity Bin",
+                  "legend": {
+                    "hide": true
+                  },
+                  "displayName": "Productivity Bin",
+                  "scale": {
+                    "type": "categorical",
+                    "mappings": [
+                      {
+                        "value": "<6/day",
+                        "color": "#EF4444"
+                      },
+                      {
+                        "value": "6-7",
+                        "color": "#F59E0B"
+                      },
+                      {
+                        "value": "7-8",
+                        "color": "#F59E0B"
+                      },
+                      {
+                        "value": "8-9",
+                        "color": "#10B981"
+                      },
+                      {
+                        "value": "9-10",
+                        "color": "#14B8A6"
+                      },
+                      {
+                        "value": ">10",
+                        "color": "#3B82F6"
+                      }
+                    ]
+                  }
+                },
+                "label": {
+                  "show": true
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 9,
+            "y": 14,
+            "width": 3,
+            "height": 7
+          }
+        },
+        {
+          "widget": {
+            "name": "footer",
+            "multilineTextboxSpec": {
+              "lines": [
+                "CHW Field Operations Â· Kenya CHW Program Â· Busia & Kisumu Â· Databricks Gold Layer Â· 2026-04-04 | Field Operations Â· Data Source: Gold Layer Metric Views"
+              ]
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 21,
+            "width": 12,
+            "height": 1
+          }
+        }
+      ],
+      "pageType": "PAGE_TYPE_CANVAS",
+      "layoutVersion": "GRID_V1"
+    },
+    {
+      "name": "global_filters",
+      "displayName": "Global Filters",
+      "layout": [
+        {
+          "widget": {
+            "name": "county_filter",
+            "queries": [
+              {
+                "name": "dashboards/01f13060f4e319a0832fd3aac876836d/datasets/01f130736db11f22865dd3e5920cd1ba_county_name",
+                "query": {
+                  "datasetName": "exec_iz",
+                  "fields": [
+                    {
+                      "name": "county_name",
+                      "expression": "`county_name`"
+                    },
+                    {
+                      "name": "county_name_associativity",
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              },
+              {
+                "name": "dashboards/01f13060f4e319a0832fd3aac876836d/datasets/01f1307369ab1c2788ed87185df28235_county_name",
+                "query": {
+                  "datasetName": "exec_maternal",
+                  "fields": [
+                    {
+                      "name": "county_name",
+                      "expression": "`county_name`"
+                    },
+                    {
+                      "name": "county_name_associativity",
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              },
+              {
+                "name": "dashboards/01f13060f4e319a0832fd3aac876836d/datasets/01f13073658719509beade877a713722_county_name",
+                "query": {
+                  "datasetName": "exec_ops",
+                  "fields": [
+                    {
+                      "name": "county_name",
+                      "expression": "`county_name`"
+                    },
+                    {
+                      "name": "county_name_associativity",
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              },
+              {
+                "name": "dashboards/01f13060f4e319a0832fd3aac876836d/datasets/01f130616e3c1e07add4fc9bbc9d0cfc_county_name",
+                "query": {
+                  "datasetName": "6825e9ca",
+                  "fields": [
+                    {
+                      "name": "county_name",
+                      "expression": "`county_name`"
+                    },
+                    {
+                      "name": "county_name_associativity",
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              },
+              {
+                "name": "dashboards/01f13060f4e319a0832fd3aac876836d/datasets/01f1306480531c9a899b9964f5222cda_county_clean",
+                "query": {
+                  "datasetName": "218df05b",
+                  "fields": [
+                    {
+                      "name": "county_clean",
+                      "expression": "`county_clean`"
+                    },
+                    {
+                      "name": "county_clean_associativity",
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              },
+              {
+                "name": "dashboards/01f13060f4e319a0832fd3aac876836d/datasets/01f1306e34ea19548e20049feb185cd2_county_name",
+                "query": {
+                  "datasetName": "anc4_subcounty",
+                  "fields": [
+                    {
+                      "name": "county_name",
+                      "expression": "`county_name`"
+                    },
+                    {
+                      "name": "county_name_associativity",
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              },
+              {
+                "name": "dashboards/01f13060f4e319a0832fd3aac876836d/datasets/01f1306ce7f71d96b73d1f5e3663de94_county_name",
+                "query": {
+                  "datasetName": "anc_defaulters_subcounty",
+                  "fields": [
+                    {
+                      "name": "county_name",
+                      "expression": "`county_name`"
+                    },
+                    {
+                      "name": "county_name_associativity",
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              },
+              {
+                "name": "dashboards/01f13060f4e319a0832fd3aac876836d/datasets/01f13079bda516039d9217a2d244e93d_county_name",
+                "query": {
+                  "datasetName": "chw_field_ops",
+                  "fields": [
+                    {
+                      "name": "county_name",
+                      "expression": "`county_name`"
+                    },
+                    {
+                      "name": "county_name_associativity",
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              },
+              {
+                "name": "dashboards/01f13060f4e319a0832fd3aac876836d/datasets/01f13079b99a1490bc620ddcedc1fffc_county_name",
+                "query": {
+                  "datasetName": "visit_type_breakdown",
+                  "fields": [
+                    {
+                      "name": "county_name",
+                      "expression": "`county_name`"
+                    },
+                    {
+                      "name": "county_name_associativity",
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              },
+              {
+                "name": "dashboards/01f13060f4e319a0832fd3aac876836d/datasets/01f13079c1011a85beb9d5ec28844e4a_county_name",
+                "query": {
+                  "datasetName": "daily_visit_trend",
+                  "fields": [
+                    {
+                      "name": "county_name",
+                      "expression": "`county_name`"
+                    },
+                    {
+                      "name": "county_name_associativity",
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              },
+              {
+                "name": "dashboards/01f13060f4e319a0832fd3aac876836d/datasets/01f1307d81851191a3d9d42994a1db3f_county_name",
+                "query": {
+                  "datasetName": "maternal_subcounty_perf",
+                  "fields": [
+                    {
+                      "name": "county_name",
+                      "expression": "`county_name`"
+                    },
+                    {
+                      "name": "county_name_associativity",
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              },
+              {
+                "name": "dashboards/01f13060f4e319a0832fd3aac876836d/datasets/01f1307d9c3714f184039848408d5dde_county",
+                "query": {
+                  "datasetName": "county_comparison_bars",
+                  "fields": [
+                    {
+                      "name": "county",
+                      "expression": "`county`"
+                    },
+                    {
+                      "name": "county_associativity",
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "title": "County",
+                "showTitle": true
+              },
+              "widgetType": "filter-multi-select",
+              "encodings": {
+                "fields": [
+                  {
+                    "fieldName": "county_name",
+                    "queryName": "dashboards/01f13060f4e319a0832fd3aac876836d/datasets/01f130736db11f22865dd3e5920cd1ba_county_name"
+                  },
+                  {
+                    "fieldName": "county_name",
+                    "queryName": "dashboards/01f13060f4e319a0832fd3aac876836d/datasets/01f1307369ab1c2788ed87185df28235_county_name"
+                  },
+                  {
+                    "fieldName": "county_name",
+                    "queryName": "dashboards/01f13060f4e319a0832fd3aac876836d/datasets/01f13073658719509beade877a713722_county_name"
+                  },
+                  {
+                    "fieldName": "county_name",
+                    "queryName": "dashboards/01f13060f4e319a0832fd3aac876836d/datasets/01f130616e3c1e07add4fc9bbc9d0cfc_county_name"
+                  },
+                  {
+                    "fieldName": "county_clean",
+                    "queryName": "dashboards/01f13060f4e319a0832fd3aac876836d/datasets/01f1306480531c9a899b9964f5222cda_county_clean"
+                  },
+                  {
+                    "fieldName": "county_name",
+                    "queryName": "dashboards/01f13060f4e319a0832fd3aac876836d/datasets/01f1306e34ea19548e20049feb185cd2_county_name"
+                  },
+                  {
+                    "fieldName": "county_name",
+                    "queryName": "dashboards/01f13060f4e319a0832fd3aac876836d/datasets/01f1306ce7f71d96b73d1f5e3663de94_county_name"
+                  },
+                  {
+                    "fieldName": "county_name",
+                    "queryName": "dashboards/01f13060f4e319a0832fd3aac876836d/datasets/01f13079bda516039d9217a2d244e93d_county_name"
+                  },
+                  {
+                    "fieldName": "county_name",
+                    "queryName": "dashboards/01f13060f4e319a0832fd3aac876836d/datasets/01f13079b99a1490bc620ddcedc1fffc_county_name"
+                  },
+                  {
+                    "fieldName": "county_name",
+                    "queryName": "dashboards/01f13060f4e319a0832fd3aac876836d/datasets/01f13079c1011a85beb9d5ec28844e4a_county_name"
+                  },
+                  {
+                    "fieldName": "county_name",
+                    "queryName": "dashboards/01f13060f4e319a0832fd3aac876836d/datasets/01f1307d81851191a3d9d42994a1db3f_county_name"
+                  },
+                  {
+                    "fieldName": "county",
+                    "queryName": "dashboards/01f13060f4e319a0832fd3aac876836d/datasets/01f1307d9c3714f184039848408d5dde_county"
+                  }
+                ]
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 0,
+            "width": 2,
+            "height": 1
+          }
+        },
+        {
+          "widget": {
+            "name": "month_filter",
+            "queries": [
+              {
+                "name": "dashboards/01f13060f4e319a0832fd3aac876836d/datasets/01f130614b8411b79c6358db545ebf9c_reportedm",
+                "query": {
+                  "datasetName": "26dac079",
+                  "fields": [
+                    {
+                      "name": "reportedm",
+                      "expression": "`reportedm`"
+                    },
+                    {
+                      "name": "reportedm_associativity",
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              },
+              {
+                "name": "dashboards/01f13060f4e319a0832fd3aac876836d/datasets/01f130736db11f22865dd3e5920cd1ba_reportedm",
+                "query": {
+                  "datasetName": "exec_iz",
+                  "fields": [
+                    {
+                      "name": "reportedm",
+                      "expression": "`reportedm`"
+                    },
+                    {
+                      "name": "reportedm_associativity",
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              },
+              {
+                "name": "dashboards/01f13060f4e319a0832fd3aac876836d/datasets/01f1307369ab1c2788ed87185df28235_reportedm",
+                "query": {
+                  "datasetName": "exec_maternal",
+                  "fields": [
+                    {
+                      "name": "reportedm",
+                      "expression": "`reportedm`"
+                    },
+                    {
+                      "name": "reportedm_associativity",
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "title": "Reporting Month",
+                "showTitle": true
+              },
+              "widgetType": "filter-multi-select",
+              "encodings": {
+                "fields": [
+                  {
+                    "fieldName": "reportedm",
+                    "queryName": "dashboards/01f13060f4e319a0832fd3aac876836d/datasets/01f130614b8411b79c6358db545ebf9c_reportedm"
+                  },
+                  {
+                    "fieldName": "reportedm",
+                    "queryName": "dashboards/01f13060f4e319a0832fd3aac876836d/datasets/01f130736db11f22865dd3e5920cd1ba_reportedm"
+                  },
+                  {
+                    "fieldName": "reportedm",
+                    "queryName": "dashboards/01f13060f4e319a0832fd3aac876836d/datasets/01f1307369ab1c2788ed87185df28235_reportedm"
+                  }
+                ]
+              }
+            }
+          },
+          "position": {
+            "x": 4,
+            "y": 0,
+            "width": 2,
+            "height": 1
+          }
+        },
+        {
+          "widget": {
+            "name": "subcounty_filter",
+            "queries": [
+              {
+                "name": "dashboards/01f13060f4e319a0832fd3aac876836d/datasets/01f130736db11f22865dd3e5920cd1ba_sub_county_name",
+                "query": {
+                  "datasetName": "exec_iz",
+                  "fields": [
+                    {
+                      "name": "sub_county_name",
+                      "expression": "`sub_county_name`"
+                    },
+                    {
+                      "name": "sub_county_name_associativity",
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              },
+              {
+                "name": "dashboards/01f13060f4e319a0832fd3aac876836d/datasets/01f1307369ab1c2788ed87185df28235_sub_county_name",
+                "query": {
+                  "datasetName": "exec_maternal",
+                  "fields": [
+                    {
+                      "name": "sub_county_name",
+                      "expression": "`sub_county_name`"
+                    },
+                    {
+                      "name": "sub_county_name_associativity",
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              },
+              {
+                "name": "dashboards/01f13060f4e319a0832fd3aac876836d/datasets/01f13073658719509beade877a713722_sub_county_name",
+                "query": {
+                  "datasetName": "exec_ops",
+                  "fields": [
+                    {
+                      "name": "sub_county_name",
+                      "expression": "`sub_county_name`"
+                    },
+                    {
+                      "name": "sub_county_name_associativity",
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              },
+              {
+                "name": "dashboards/01f13060f4e319a0832fd3aac876836d/datasets/01f130616e3c1e07add4fc9bbc9d0cfc_sub_county_name",
+                "query": {
+                  "datasetName": "6825e9ca",
+                  "fields": [
+                    {
+                      "name": "sub_county_name",
+                      "expression": "`sub_county_name`"
+                    },
+                    {
+                      "name": "sub_county_name_associativity",
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              },
+              {
+                "name": "dashboards/01f13060f4e319a0832fd3aac876836d/datasets/01f1306e34ea19548e20049feb185cd2_sub_county_name",
+                "query": {
+                  "datasetName": "anc4_subcounty",
+                  "fields": [
+                    {
+                      "name": "sub_county_name",
+                      "expression": "`sub_county_name`"
+                    },
+                    {
+                      "name": "sub_county_name_associativity",
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              },
+              {
+                "name": "dashboards/01f13060f4e319a0832fd3aac876836d/datasets/01f1306ce7f71d96b73d1f5e3663de94_sub_county_name",
+                "query": {
+                  "datasetName": "anc_defaulters_subcounty",
+                  "fields": [
+                    {
+                      "name": "sub_county_name",
+                      "expression": "`sub_county_name`"
+                    },
+                    {
+                      "name": "sub_county_name_associativity",
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              },
+              {
+                "name": "dashboards/01f13060f4e319a0832fd3aac876836d/datasets/01f13079bda516039d9217a2d244e93d_sub_county_name",
+                "query": {
+                  "datasetName": "chw_field_ops",
+                  "fields": [
+                    {
+                      "name": "sub_county_name",
+                      "expression": "`sub_county_name`"
+                    },
+                    {
+                      "name": "sub_county_name_associativity",
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              },
+              {
+                "name": "dashboards/01f13060f4e319a0832fd3aac876836d/datasets/01f13079b99a1490bc620ddcedc1fffc_sub_county_name",
+                "query": {
+                  "datasetName": "visit_type_breakdown",
+                  "fields": [
+                    {
+                      "name": "sub_county_name",
+                      "expression": "`sub_county_name`"
+                    },
+                    {
+                      "name": "sub_county_name_associativity",
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              },
+              {
+                "name": "dashboards/01f13060f4e319a0832fd3aac876836d/datasets/01f13079c1011a85beb9d5ec28844e4a_sub_county_name",
+                "query": {
+                  "datasetName": "daily_visit_trend",
+                  "fields": [
+                    {
+                      "name": "sub_county_name",
+                      "expression": "`sub_county_name`"
+                    },
+                    {
+                      "name": "sub_county_name_associativity",
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              },
+              {
+                "name": "dashboards/01f13060f4e319a0832fd3aac876836d/datasets/01f1307d81851191a3d9d42994a1db3f_sub_county_name",
+                "query": {
+                  "datasetName": "maternal_subcounty_perf",
+                  "fields": [
+                    {
+                      "name": "sub_county_name",
+                      "expression": "`sub_county_name`"
+                    },
+                    {
+                      "name": "sub_county_name_associativity",
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "title": "Sub-County",
+                "showTitle": true
+              },
+              "widgetType": "filter-multi-select",
+              "encodings": {
+                "fields": [
+                  {
+                    "fieldName": "sub_county_name",
+                    "queryName": "dashboards/01f13060f4e319a0832fd3aac876836d/datasets/01f130736db11f22865dd3e5920cd1ba_sub_county_name"
+                  },
+                  {
+                    "fieldName": "sub_county_name",
+                    "queryName": "dashboards/01f13060f4e319a0832fd3aac876836d/datasets/01f1307369ab1c2788ed87185df28235_sub_county_name"
+                  },
+                  {
+                    "fieldName": "sub_county_name",
+                    "queryName": "dashboards/01f13060f4e319a0832fd3aac876836d/datasets/01f13073658719509beade877a713722_sub_county_name"
+                  },
+                  {
+                    "fieldName": "sub_county_name",
+                    "queryName": "dashboards/01f13060f4e319a0832fd3aac876836d/datasets/01f130616e3c1e07add4fc9bbc9d0cfc_sub_county_name"
+                  },
+                  {
+                    "fieldName": "sub_county_name",
+                    "queryName": "dashboards/01f13060f4e319a0832fd3aac876836d/datasets/01f1306e34ea19548e20049feb185cd2_sub_county_name"
+                  },
+                  {
+                    "fieldName": "sub_county_name",
+                    "queryName": "dashboards/01f13060f4e319a0832fd3aac876836d/datasets/01f1306ce7f71d96b73d1f5e3663de94_sub_county_name"
+                  },
+                  {
+                    "fieldName": "sub_county_name",
+                    "queryName": "dashboards/01f13060f4e319a0832fd3aac876836d/datasets/01f13079bda516039d9217a2d244e93d_sub_county_name"
+                  },
+                  {
+                    "fieldName": "sub_county_name",
+                    "queryName": "dashboards/01f13060f4e319a0832fd3aac876836d/datasets/01f13079b99a1490bc620ddcedc1fffc_sub_county_name"
+                  },
+                  {
+                    "fieldName": "sub_county_name",
+                    "queryName": "dashboards/01f13060f4e319a0832fd3aac876836d/datasets/01f13079c1011a85beb9d5ec28844e4a_sub_county_name"
+                  },
+                  {
+                    "fieldName": "sub_county_name",
+                    "queryName": "dashboards/01f13060f4e319a0832fd3aac876836d/datasets/01f1307d81851191a3d9d42994a1db3f_sub_county_name"
+                  }
+                ]
+              }
+            }
+          },
+          "position": {
+            "x": 2,
+            "y": 0,
+            "width": 2,
+            "height": 1
+          }
+        },
+        {
+          "widget": {
+            "name": "status_filter",
+            "queries": [
+              {
+                "name": "dashboards/01f13060f4e319a0832fd3aac876836d/datasets/01f130736db11f22865dd3e5920cd1ba_Coverage Status",
+                "query": {
+                  "datasetName": "exec_iz",
+                  "fields": [
+                    {
+                      "name": "Coverage Status",
+                      "expression": "`Coverage Status`"
+                    },
+                    {
+                      "name": "Coverage Status_associativity",
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              },
+              {
+                "name": "dashboards/01f13060f4e319a0832fd3aac876836d/datasets/01f130616e3c1e07add4fc9bbc9d0cfc_Coverage Status",
+                "query": {
+                  "datasetName": "6825e9ca",
+                  "fields": [
+                    {
+                      "name": "Coverage Status",
+                      "expression": "`Coverage Status`"
+                    },
+                    {
+                      "name": "Coverage Status_associativity",
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "title": "Coverage Status",
+                "showTitle": true
+              },
+              "widgetType": "filter-multi-select",
+              "encodings": {
+                "fields": [
+                  {
+                    "fieldName": "Coverage Status",
+                    "queryName": "dashboards/01f13060f4e319a0832fd3aac876836d/datasets/01f130736db11f22865dd3e5920cd1ba_Coverage Status"
+                  },
+                  {
+                    "fieldName": "Coverage Status",
+                    "queryName": "dashboards/01f13060f4e319a0832fd3aac876836d/datasets/01f130616e3c1e07add4fc9bbc9d0cfc_Coverage Status"
+                  }
+                ]
+              }
+            }
+          },
+          "position": {
+            "x": 6,
+            "y": 0,
+            "width": 2,
+            "height": 1
+          }
+        }
+      ],
+      "pageType": "PAGE_TYPE_GLOBAL_FILTERS",
+      "layoutVersion": "GRID_V1"
+    }
+  ],
+  "uiSettings": {
+    "theme": {
+      "canvasBackgroundColor": {
+        "light": "#0B1120",
+        "dark": "#0B1120"
+      },
+      "widgetBackgroundColor": {
+        "light": "#111827",
+        "dark": "#111827"
+      },
+      "widgetBorderColor": {
+        "light": "#1E293B",
+        "dark": "#1E293B"
+      },
+      "fontColor": {
+        "light": "#E5E7EB",
+        "dark": "#E5E7EB"
+      },
+      "selectionColor": {
+        "light": "#14B8A6",
+        "dark": "#14B8A6"
+      },
+      "visualizationColors": [
+        "#14B8A6",
+        "#F97316",
+        "#10B981",
+        "#3B82F6",
+        "#F59E0B",
+        "#EF4444",
+        "#EC4899",
+        "#8B5CF6",
+        "#06B6D4",
+        "#D97706"
+      ],
+      "widgetHeaderAlignment": "LEFT",
+      "fontFamily": "Verdana"
+    },
+    "applyModeEnabled": false
+  }
+}
