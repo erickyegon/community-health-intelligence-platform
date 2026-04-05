@@ -8,11 +8,12 @@
 [![Delta Lake](https://img.shields.io/badge/Storage-Delta%20Lake-00ADD8?style=for-the-badge&logo=delta&logoColor=white)](https://delta.io)
 [![Unity Catalog](https://img.shields.io/badge/Governance-Unity%20Catalog-4B0082?style=for-the-badge)](https://databricks.com/product/unity-catalog)
 [![eCHIS](https://img.shields.io/badge/Source-Kenya%20eCHIS-008C45?style=for-the-badge)](https://echis.health.go.ke)
+[![Data Coverage](https://img.shields.io/badge/Data%20Coverage-Dec%202024–Apr%202025-blue?style=for-the-badge)](#-technical-specifications)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](LICENSE)
 
 **An end-to-end analytics platform transforming Kenya's national eCHIS community health records into actionable intelligence — from bronze ingestion through gold-layer analytics to executive dashboards with enterprise-grade row-level security and privacy-by-design data handling.**
 
-[Why This Matters](#-why-this-matters) · [Dashboard](#-dashboard-pages) · [Architecture](#-architecture) · [Privacy & PII](#-privacy--pii-protection) · [Security](#-row-level-security) · [Getting Started](#-getting-started) · [Broader Adoption](#-deployment-considerations-for-resource-constrained-settings)
+[Why This Matters](#-why-this-matters) · [Dashboard](#-dashboard-pages) · [Architecture](#-architecture) · [Privacy & PII](#-privacy--pii-protection) · [Security](#-row-level-security) · [Roadmap](#-roadmap--future-directions) · [Getting Started](#-getting-started) · [Broader Adoption](#-deployment-considerations-for-resource-constrained-settings)
 
 </div>
 
@@ -41,6 +42,7 @@ Closing the gap between current Penta3 coverage (60.8%) and the national target 
 - [Performance Engineering](#-performance-engineering)
 - [Data Quality Framework](#-data-quality-framework)
 - [Deployment Considerations for Resource-Constrained Settings](#-deployment-considerations-for-resource-constrained-settings)
+- [Roadmap & Future Directions](#-roadmap--future-directions)
 - [Repository Structure](#-repository-structure)
 - [Getting Started](#-getting-started)
 - [Technical Specifications](#-technical-specifications)
@@ -48,6 +50,8 @@ Closing the gap between current Penta3 coverage (60.8%) and the national target 
 ---
 
 ## 📊 Executive Summary
+
+> **Data refreshed as of April 2025 (5 months of longitudinal records). Pipeline supports daily/weekly refreshes from eCHIS.**
 
 This platform serves as the **central nervous system** for Kenya's community health program, synthesizing data from **4,671 Community Health Workers** across **2 counties** and **17 sub-counties** into a unified decision-support system.
 
@@ -230,7 +234,7 @@ flowchart TD
 > Strategic overview for program leadership — key coverage indicators, geographic performance rankings, and cross-domain health metrics at a glance.
 
 <p align="center">
-  <img src="images/01_executive_command_center.png" alt="Executive Command Center" width="100%"/>
+  <img src="images/01_executive_command_center.png" alt="Executive Command Center" width="800"/>
 </p>
 
 **Key Capabilities:**
@@ -246,7 +250,7 @@ flowchart TD
 > End-to-end visibility into the maternal health cascade — from first antenatal contact through postnatal care, with dropout detection at every stage.
 
 <p align="center">
-  <img src="images/02_maternal_continuum_of_care.png" alt="Maternal Continuum of Care" width="100%"/>
+  <img src="images/02_maternal_continuum_of_care.png" alt="Maternal Continuum of Care" width="800"/>
 </p>
 
 **Key Capabilities:**
@@ -262,7 +266,7 @@ flowchart TD
 > Operational intelligence for workforce management — productivity monitoring, visit pattern analysis, and zone-level performance tracking.
 
 <p align="center">
-  <img src="images/03_chw_field_operations.png" alt="CHW Field Operations" width="100%"/>
+  <img src="images/03_chw_field_operations.png" alt="CHW Field Operations" width="800"/>
 </p>
 
 **Key Capabilities:**
@@ -270,6 +274,24 @@ flowchart TD
 - **Clinical visit type breakdown** — isolating immunization (80.8%), defaulter follow-up (14.2%), and ANC visits (5.0%) from household visit noise
 - **Monthly visit volume trends** with county-level color segmentation
 - **Zone performance table** correlating CHW density with immunization coverage outcomes
+
+---
+
+### Genie AI: Natural Language Querying
+
+> Ask questions in plain English and get instant answers, charts, and insights — no SQL required.
+
+<p align="center">
+  <img src="images/04_genie_ai_natural_language.png" alt="Databricks Genie AI Natural Language Querying" width="800"/>
+</p>
+
+**Example queries sub-county officers and CHMTs ask today:**
+- *"Show me ANC defaulter rates in Bunyala sub-county for the last three months"*
+- *"Which sub-counties are below 50% Penta3 coverage this quarter?"*
+- *"Compare CHW productivity between Busia and Kisumu counties"*
+- *"How many mothers dropped out after ANC1 in Kisumu last month?"*
+
+Genie translates these into governed queries against the RLS-protected gold layer and returns visualizations, tables, and explanations in seconds — empowering program managers to explore data conversationally without depending on a data analyst for every question.
 
 ---
 
@@ -331,6 +353,7 @@ flowchart TB
         P1["Executive\nCommand Center"]
         P2["Maternal\nContinuum"]
         P3["CHW Field\nOperations"]
+        P4["Genie AI\nNatural Language"]
     end
 
     Sources --> Bronze --> Silver --> Gold
@@ -505,8 +528,8 @@ eCHIS Platform → Bronze (raw, PII retained) → Silver (de-identified, standar
 
 This platform is built on Databricks, which is optimal for organizations with existing cloud infrastructure and data engineering capacity. The architecture is intentionally modular — county governments or NGOs evaluating adoption at lower cost can implement equivalent pipelines and dashboards without a Databricks license.
 
-| Component | This Platform | Lower-Cost Alternative |
-|-----------|--------------|----------------------|
+| Component | Current Implementation | Lower-Cost Alternative |
+|-----------|----------------------|----------------------|
 | **Data pipeline** | Delta Lake + PySpark | PostgreSQL + dbt Core (free, open source) |
 | **Dashboard** | Databricks AI/BI | Apache Superset (open source, Kenya MOH-approved) |
 | **Semantic layer** | Unity Catalog Metric Views | dbt metrics layer (free tier) |
@@ -522,6 +545,38 @@ For national-scale adoption through Kenya MOH, the recommended path is:
 3. **Scale** — Migrate to DHIS2's built-in analytics for counties without cloud infrastructure, retaining the star schema logic as the transformation layer
 
 > If you are a county government, NGO, or MOH department interested in adapting this platform, please open an issue or reach out directly. The data model and SQL definitions are freely available under the MIT license.
+
+---
+
+## 🛣️ Roadmap & Future Directions
+
+This platform is designed as a living foundation that can evolve from county-level pilots to national-scale impact, while remaining adaptable to resource realities across Kenya's 47 counties.
+
+### Phase 1 — County Pilots & Validation (Q2–Q4 2026)
+- Expand live deployment to all 17 sub-counties in Busia and Kisumu with weekly data refreshes
+- Conduct formal **Data Protection Impact Assessment (DPIA)** and secure data-sharing agreements with County Health Management Teams
+- Pilot Genie AI natural language querying with 20+ real-world questions from sub-county officers and CHMTs
+- Gather user feedback on dashboard usability and integrate performance improvements
+
+### Phase 2 — Predictive & Prescriptive Analytics (2026–2027)
+- Add **defaulter risk scoring models** — predict mothers at high risk of dropping out of ANC using historical patterns
+- Introduce early-warning alerts for immunization gaps and low CHW productivity zones
+- Enable scenario modeling: *"What happens to Penta3 coverage if we add 10 more CHWs in Bunyala sub-county?"*
+- Integrate causal inference insights — estimating the impact of supervision frequency on CHW visit quality
+
+### Phase 3 — Broader Adoption & Interoperability (2027+)
+- Package a lightweight, platform-agnostic version using PostgreSQL + dbt + Apache Superset for counties without Databricks access
+- Develop integration pathways with **DHIS2** (Kenya's national health information system) and additional eCHIS modules
+- Support expansion to additional high-burden counties under national maternal and child health initiatives
+- Contribute reusable components (star schema, RLS patterns, de-identification protocol) as open resources for other African CHIS implementations
+
+### Phase 4 — National & Regional Scale
+- Explore alignment with Kenya's next Community Health Strategy cycle and the national digitization agenda
+- Add multi-language support (Kiswahili + English) for broader accessibility across county health teams
+- Enable secure cross-county benchmarking while maintaining strict geographic row-level security
+- Investigate federated learning or privacy-preserving techniques for national-level insights without centralizing raw data
+
+**We welcome collaborators** — county governments, NGOs, developers, and researchers — to co-create these phases. Open an issue on GitHub or reach out directly if you would like to pilot, adapt, or extend the platform.
 
 ---
 
@@ -559,7 +614,8 @@ community-health-intelligence-platform/
 ├── 🖼 images/                             # Dashboard screenshots
 │   ├── 01_executive_command_center.png
 │   ├── 02_maternal_continuum_of_care.png
-│   └── 03_chw_field_operations.png
+│   ├── 03_chw_field_operations.png
+│   └── 04_genie_ai_natural_language.png  # Add when available
 │
 ├── README.md
 ├── LICENSE
