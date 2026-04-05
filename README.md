@@ -12,14 +12,25 @@
 
 **An end-to-end analytics platform transforming Kenya's national eCHIS community health records into actionable intelligence — from bronze ingestion through gold-layer analytics to executive dashboards with enterprise-grade row-level security and privacy-by-design data handling.**
 
-[Explore the Dashboard](#-dashboard-pages) · [Data Source](#-data-source--echis) · [Architecture](#-architecture) · [Privacy & PII](#-privacy--pii-protection) · [Security](#-row-level-security) · [Getting Started](#-getting-started)
+[Why This Matters](#-why-this-matters) · [Dashboard](#-dashboard-pages) · [Architecture](#-architecture) · [Privacy & PII](#-privacy--pii-protection) · [Security](#-row-level-security) · [Getting Started](#-getting-started) · [Broader Adoption](#-deployment-considerations-for-resource-constrained-settings)
 
 </div>
 
 ---
 
+## 💡 Why This Matters
+
+In Busia and Kisumu counties, a child who misses their third Penta3 dose faces preventable risks of whooping cough, tetanus, and hepatitis B. A mother who drops out after her first antenatal visit — and 16.3% of registered mothers do — loses the clinical monitoring that catches pre-eclampsia, anaemia, and obstetric complications before they become emergencies. Until now, the 5,000 Community Health Workers serving these counties had no unified system to identify who was falling through the gaps in real time.
+
+This platform changes that. With Penta3 coverage currently at **60.8%** against an 80% national target, and ANC4+ completion at just **25.7%** against a 60% WHO standard, the data already shows where the gaps are — Bunyala sub-county at 9.3% immunization coverage, three sub-counties with ANC defaulter rates above 20%, a modern contraceptive prevalence rate of just 3.7% against an FP2030 target of 25%. The question is whether program managers can see these gaps fast enough to act. This platform answers yes — with sub-county level intelligence refreshing every 8 to 22 minutes, role-scoped to each user's geography, and accessible in plain English through Genie AI without writing a single line of SQL.
+
+Closing the gap between current Penta3 coverage (60.8%) and the national target (80%) means approximately **1,800 additional children** in Busia and Kisumu reaching full immunization protection. Bringing ANC4+ rates from 25.7% to the 60% target means thousands more mothers receiving the full clinical monitoring that prevents maternal mortality. This platform exists to make those numbers move.
+
+---
+
 ## 📋 Table of Contents
 
+- [Why This Matters](#-why-this-matters)
 - [Executive Summary](#-executive-summary)
 - [Data Source — eCHIS](#-data-source--echis)
 - [Privacy & PII Protection](#-privacy--pii-protection)
@@ -29,6 +40,7 @@
 - [Row-Level Security](#-row-level-security)
 - [Performance Engineering](#-performance-engineering)
 - [Data Quality Framework](#-data-quality-framework)
+- [Deployment Considerations for Resource-Constrained Settings](#-deployment-considerations-for-resource-constrained-settings)
 - [Repository Structure](#-repository-structure)
 - [Getting Started](#-getting-started)
 - [Technical Specifications](#-technical-specifications)
@@ -82,7 +94,7 @@ A **three-tier analytics platform** built on Databricks Lakehouse architecture t
 - **Anonymizes** personally identifiable information at the silver layer, ensuring no patient-level PII reaches the analytics tier
 - **Models** complex health domain relationships across immunization, maternal care, family planning, and CHW operations
 - **Secures** data with function-based row-level security ensuring each user sees only their authorized geographic scope
-- **Delivers** insights through a 3-page executive dashboard with cascading drill-down filters
+- **Delivers** insights through a 3-page executive dashboard with cascading drill-down filters and Genie AI natural language querying
 
 ---
 
@@ -106,18 +118,18 @@ This platform ingests data from Kenya's **National Electronic Community Health I
 
 ```mermaid
 flowchart LR
-    subgraph eCHIS["<b>Kenya National eCHIS Platform</b>"]
-        CHW["CHW Mobile App\n<i>Daily field data entry</i>"] --> Central["eCHIS Central\n<i>echis.health.go.ke</i>"]
+    subgraph eCHIS["Kenya National eCHIS Platform"]
+        CHW["CHW Mobile App\nDaily field data entry"] --> Central["eCHIS Central\nechis.health.go.ke"]
     end
 
-    subgraph Extract["<b>Data Extraction</b>"]
+    subgraph Extract["Data Extraction"]
         Central --> |"Authorized\nAPI/Export"| Raw["Raw CSV/JSON\nExtracts"]
     end
 
-    subgraph Platform["<b>This Platform</b>"]
-        Raw --> |"Ingestion"| Bronze["Bronze\n<i>Raw records</i>"]
-        Bronze --> |"PII removal\nStandardization"| Silver["Silver\n<i>De-identified</i>"]
-        Silver --> |"Star schema\nAggregation"| Gold["Gold\n<i>Analytics-ready</i>"]
+    subgraph Platform["This Platform"]
+        Raw --> |"Ingestion"| Bronze["Bronze\nRaw records"]
+        Bronze --> |"PII removal\nStandardization"| Silver["Silver\nDe-identified"]
+        Silver --> |"Star schema\nAggregation"| Gold["Gold\nAnalytics-ready"]
     end
 
     style eCHIS fill:#008C45,color:#fff
@@ -148,29 +160,29 @@ This platform implements a **multi-layered privacy architecture** aligned with K
 
 ```mermaid
 flowchart TD
-    subgraph Bronze["<b>Bronze Layer</b> — Raw Ingestion"]
-        B1["Raw eCHIS extracts\n<i>May contain PII fields</i>"]
+    subgraph Bronze["Bronze Layer — Raw Ingestion"]
+        B1["Raw eCHIS extracts\nMay contain PII fields"]
         style Bronze fill:#CD7F32,color:#fff
     end
 
-    subgraph Silver["<b>Silver Layer</b> — De-identification"]
-        S1["UUID pseudonymization\n<i>Patient IDs → opaque UUIDs</i>"]
-        S2["Name field removal\n<i>Patient/beneficiary names dropped</i>"]
-        S3["Geographic generalization\n<i>GPS → sub-county level only</i>"]
-        S4["Date coarsening\n<i>Exact dates → reporting month</i>"]
+    subgraph Silver["Silver Layer — De-identification"]
+        S1["UUID pseudonymization\nPatient IDs → opaque UUIDs"]
+        S2["Name field removal\nPatient/beneficiary names dropped"]
+        S3["Geographic generalization\nGPS → sub-county level only"]
+        S4["Date coarsening\nExact dates → reporting month"]
         style Silver fill:#C0C0C0,color:#000
     end
 
-    subgraph Gold["<b>Gold Layer</b> — Aggregate Analytics"]
-        G1["No individual-level records\n<i>All metrics are aggregated</i>"]
-        G2["Statistical disclosure control\n<i>Small cell suppression</i>"]
+    subgraph Gold["Gold Layer — Aggregate Analytics"]
+        G1["No individual-level records\nAll metrics are aggregated"]
+        G2["Statistical disclosure control\nSmall cell suppression"]
         style Gold fill:#FFD700,color:#000
     end
 
-    subgraph Access["<b>Access Controls</b>"]
-        A1["Row-Level Security\n<i>Geographic scoping per user</i>"]
-        A2["Column-Level Governance\n<i>Sensitive fields excluded from views</i>"]
-        A3["Audit Logging\n<i>All queries tracked</i>"]
+    subgraph Access["Access Controls"]
+        A1["Row-Level Security\nGeographic scoping per user"]
+        A2["Column-Level Governance\nSensitive fields excluded from views"]
+        A3["Audit Logging\nAll queries tracked"]
         style Access fill:#4B0082,color:#fff
     end
 
@@ -190,22 +202,22 @@ flowchart TD
 
 | Measure | Description |
 |---------|-------------|
-| **Pseudonymization** | Patient and CHW identifiers are replaced with opaque UUIDs (`chw_area_uuid`, `chw_uuid`) that cannot be reversed without the bronze-layer mapping |
-| **Minimization** | Only fields required for aggregate health analytics are promoted to the gold layer — names, phone numbers, precise addresses, and national IDs are excluded |
-| **Geographic Generalization** | Location data is generalized to sub-county level; no household-level GPS coordinates appear in analytics tables |
-| **Temporal Coarsening** | Individual encounter dates are aggregated to monthly reporting periods (`reportedm`, `date_key` as YYYYMM) |
-| **Access Segregation** | Bronze layer access is restricted to pipeline service principals; analysts interact only with de-identified gold-layer tables |
+| **Pseudonymization** | Patient and CHW identifiers replaced with opaque UUIDs that cannot be reversed without the bronze-layer mapping |
+| **Minimization** | Only fields required for aggregate health analytics are promoted to the gold layer |
+| **Geographic Generalization** | Location data generalized to sub-county level; no household-level GPS in analytics tables |
+| **Temporal Coarsening** | Individual encounter dates aggregated to monthly reporting periods (`reportedm`) |
+| **Access Segregation** | Bronze layer restricted to pipeline service principals; analysts interact only with de-identified gold-layer tables |
 | **Row-Level Security** | Unity Catalog row filters ensure county managers see only their county; sub-county officers see only their sub-county |
-| **No Data in Repository** | This Git repository contains **zero data files** — only SQL definitions, schema DDL, and dashboard configurations. Raw data requires authorized eCHIS credentials. |
-| **Audit Trail** | All data access is logged through Databricks Unity Catalog audit logs, providing full query-level traceability |
+| **No Data in Repository** | This repository contains **zero data files** — only SQL definitions, schema DDL, and dashboard configurations |
+| **Audit Trail** | All data access logged through Databricks Unity Catalog audit logs |
 
 ### Regulatory Alignment
 
 | Framework | Compliance Approach |
 |-----------|-------------------|
-| **Kenya Data Protection Act (2019)** | De-identification at silver layer; purpose limitation (community health analytics only); data minimization in gold layer |
+| **Kenya Data Protection Act (2019)** | De-identification at silver layer; purpose limitation; data minimization in gold layer |
 | **WHO Health Data Governance** | Aggregate reporting only; no individual-level health records in analytical outputs |
-| **HIPAA Principles** (reference) | De-identification consistent with Safe Harbor method — 18 identifier categories addressed through removal or generalization |
+| **HIPAA Principles** (reference) | De-identification consistent with Safe Harbor method — 18 identifier categories addressed |
 
 > **⚠️ Important:** While this platform implements robust de-identification controls, deployers should conduct a formal **Data Protection Impact Assessment (DPIA)** per Kenya's Data Protection Act before processing live eCHIS data in production.
 
@@ -225,7 +237,7 @@ flowchart TD
 - **6 real-time KPI counters** spanning immunization (Penta3: 60.8%), maternal health (ANC4+: 25.7%), and workforce metrics
 - **Sub-county performance rankings** with conditional status classification (On Track / At Risk / Critical)
 - **Cross-domain synthesis** — immunization coverage, mCPR gauge with target overlay, and maternal care funnel in a single view
-- **County-level immunization comparison** with interactive drill-down
+- **Dynamic alert strip** flagging sub-counties below threshold in real time
 
 ---
 
@@ -242,7 +254,6 @@ flowchart TD
 - **County comparison analysis** — Busia vs. Kisumu across all maternal indicators revealing a **2.5× defaulter rate disparity**
 - **Sub-county performance matrix** with status-based conditional formatting for rapid triage
 - **Dual-axis monthly trend** tracking ANC4+ completion and defaulter rates over time
-- **Delta insight cards** showing month-over-month directional changes
 
 ---
 
@@ -268,25 +279,25 @@ flowchart TD
 
 ```mermaid
 flowchart TB
-    subgraph Sources["<b>Kenya National eCHIS</b>"]
+    subgraph Sources["Kenya National eCHIS"]
         S1[("CHW Mobile\nApp Data")]
         S2[("Health Facility\nRegisters")]
         S3[("Population\nCensus Data")]
     end
 
-    subgraph Bronze["<b>Bronze Layer</b> — Raw Ingestion"]
-        B1["Raw CHW Reports\n<i>PII retained for lineage</i>"]
+    subgraph Bronze["Bronze Layer — Raw Ingestion"]
+        B1["Raw CHW Reports\nPII retained for lineage"]
         B2["Raw Facility Data"]
         B3["Raw Population Data"]
     end
 
-    subgraph Silver["<b>Silver Layer</b> — Cleansed & De-identified"]
-        SV1["Geography Standardization\n<i>County/Sub-county normalization</i>"]
-        SV2["PII Removal & Pseudonymization\n<i>Names dropped, IDs → UUIDs</i>"]
-        SV3["Schema Enforcement\n<i>Type validation & coarsening</i>"]
+    subgraph Silver["Silver Layer — Cleansed & De-identified"]
+        SV1["Geography Standardization\nCounty/Sub-county normalization"]
+        SV2["PII Removal & Pseudonymization\nNames dropped, IDs → UUIDs"]
+        SV3["Schema Enforcement\nType validation & coarsening"]
     end
 
-    subgraph Gold["<b>Gold Layer</b> — Analytics Ready"]
+    subgraph Gold["Gold Layer — Analytics Ready"]
         direction TB
         subgraph Dimensions["Dimensions"]
             D1["dim_chw"]
@@ -303,24 +314,20 @@ flowchart TB
             F7["fact_population"]
             F8["fact_pregnancy_journey"]
         end
-        subgraph Analytics["Materialized Views & Analytical Views"]
+        subgraph Analytics["Analytical Views"]
             MV1["mv_immunization"]
             MV2["mv_maternal_health"]
-            MV3["mv_family_planning"]
-            MV4["mv_supervision"]
             VW1["vw_executive_summary"]
             VW2["vw_maternal_funnel"]
-            VW3["vw_chw_performance"]
-            VW4["vw_coverage_gaps"]
         end
     end
 
-    subgraph Security["<b>Row-Level Security</b>"]
+    subgraph Security["Row-Level Security"]
         RLS["county_access_filter()\nsubcounty_access_filter()"]
-        UAC[("user_access_control\n<i>9 role assignments</i>")]
+        UAC[("user_access_control\n9 role assignments")]
     end
 
-    subgraph Dashboard["<b>AI/BI Dashboard</b>"]
+    subgraph Dashboard["AI/BI Dashboard + Genie"]
         P1["Executive\nCommand Center"]
         P2["Maternal\nContinuum"]
         P3["CHW Field\nOperations"]
@@ -334,35 +341,6 @@ flowchart TB
     style Gold fill:#FFD700,color:#000
     style Security fill:#4B0082,color:#fff
     style Dashboard fill:#006D5B,color:#fff
-```
-
-### Dashboard Data Flow
-
-```mermaid
-flowchart LR
-    subgraph Filters["Global Cascading Filters"]
-        CF["County"] --> SCF["Sub-County"]
-        MF["Reporting Month"]
-        CSF["Coverage Status"]
-    end
-
-    subgraph Datasets["26 Analytical Datasets"]
-        direction TB
-        ED["Executive\n5 datasets"]
-        MD["Maternal\n10 datasets"]
-        CD["CHW Ops\n3 datasets"]
-        OD["Shared\n8 datasets"]
-    end
-
-    subgraph RLS["Row-Level Security"]
-        RF["SQL UDF Filters\n<i>Evaluated per query</i>"]
-    end
-
-    Filters --> Datasets
-    Datasets --> RLS
-    RLS --> |"ADMIN: All Data"| A["Full Access"]
-    RLS --> |"COUNTY: Filtered"| B["County Scope"]
-    RLS --> |"SUBCOUNTY: Filtered"| C["Sub-County Scope"]
 ```
 
 ---
@@ -389,20 +367,6 @@ erDiagram
         string facility_name
     }
 
-    dim_facility {
-        string facility_id PK
-        string facility_name
-        string county_name "RLS-filtered"
-        string sub_county_name "RLS-filtered"
-        string facility_type
-    }
-
-    dim_geography {
-        string county_name PK "RLS-filtered"
-        string sub_county_name PK "RLS-filtered"
-        string ward_name
-    }
-
     fact_immunization {
         string chw_uuid FK "Pseudonymized"
         date reportedm "Month-level only"
@@ -425,7 +389,7 @@ erDiagram
         int date_key "YYYYMM — no daily precision"
         bigint home_visits "Aggregate count"
         int active_days
-        bigint unique_beneficiaries "Count only — no identifiers"
+        bigint unique_beneficiaries "Count only"
     }
 
     fact_family_planning {
@@ -452,15 +416,13 @@ erDiagram
 
 ### Multi-Tier Access Control Architecture
 
-The platform implements **function-based row-level security** through Unity Catalog, ensuring data governance without application-layer complexity.
-
 ```mermaid
 flowchart TD
     User["Authenticated User"] --> Auth{"Check\nuser_access_control"}
 
-    Auth --> |"ADMIN"| Admin["Full Dataset\n<i>All counties, all sub-counties</i>"]
-    Auth --> |"COUNTY"| County["County-Scoped\n<i>All sub-counties in assigned county</i>"]
-    Auth --> |"SUBCOUNTY"| SubCounty["Sub-County Scoped\n<i>Single sub-county only</i>"]
+    Auth --> |"ADMIN"| Admin["Full Dataset\nAll counties, all sub-counties"]
+    Auth --> |"COUNTY"| County["County-Scoped\nAll sub-counties in assigned county"]
+    Auth --> |"SUBCOUNTY"| SubCounty["Sub-County Scoped\nSingle sub-county only"]
 
     Admin --> Query["SQL Query Execution"]
     County --> Filter1["county_access_filter()"] --> Query
@@ -487,13 +449,13 @@ flowchart TD
 
 ### Access Matrix
 
-| Role | Scope | Tables Visible | Example Use Case |
-|------|-------|---------------|-----------------|
-| `ADMIN` | All data across all counties | 11 tables, unrestricted | National Program Director |
-| `COUNTY` | All sub-counties within assigned county | 11 tables, county-filtered | County Health Management Team |
-| `SUBCOUNTY` | Single sub-county only | 11 tables, sub-county-filtered | Sub-County Health Officer |
+| Role | Scope | Example Use Case |
+|------|-------|-----------------|
+| `ADMIN` | All data across all counties | National Program Director |
+| `COUNTY` | All sub-counties within assigned county | County Health Management Team |
+| `SUBCOUNTY` | Single sub-county only | Sub-County Health Officer |
 
-> **Design Decision:** RLS is implemented at the **storage layer** via Unity Catalog row filters rather than application-layer WHERE clauses. This ensures security is enforced regardless of access path — dashboard, notebook, SQL editor, or API — and is tamper-proof at the analyst level.
+> **Design Decision:** RLS is implemented at the **storage layer** via Unity Catalog row filters rather than application-layer WHERE clauses. This ensures security is enforced regardless of access path — dashboard, notebook, SQL editor, or API — and cannot be bypassed at the analyst level.
 
 ---
 
@@ -524,7 +486,7 @@ flowchart TD
 | Issue | Records Affected | Root Cause | Resolution |
 |-------|-----------------|------------|------------|
 | UNKNOWN county mapping | 96,712 home visits (8.8%) | 558 CHWs with UUIDs absent from `dim_chw` master data | Traced 91.5% to Busia (71.6%) and Kisumu (19.9%) via bronze-layer cross-reference |
-| Unmapped facilities | 130 facilities | NULL county/sub-county in `dim_facility` | Identified by facility name pattern matching (e.g., "NAMBALE SUB COUNTY HOSPITAL" → Busia) |
+| Unmapped facilities | 130 facilities | NULL county/sub-county in `dim_facility` | Identified by facility name pattern matching |
 | Temporal data asymmetry | — | Different eCHIS modules have different reporting lag | Documented: Home visits (5mo), Immunization (3mo), Pregnancy (2mo) |
 
 ### Data Lineage
@@ -536,6 +498,30 @@ eCHIS Platform → Bronze (raw, PII retained) → Silver (de-identified, standar
                                            Name/address removal                    Views created
                                            Geographic generalization               Metrics calculated
 ```
+
+---
+
+## 🌍 Deployment Considerations for Resource-Constrained Settings
+
+This platform is built on Databricks, which is optimal for organizations with existing cloud infrastructure and data engineering capacity. The architecture is intentionally modular — county governments or NGOs evaluating adoption at lower cost can implement equivalent pipelines and dashboards without a Databricks license.
+
+| Component | This Platform | Lower-Cost Alternative |
+|-----------|--------------|----------------------|
+| **Data pipeline** | Delta Lake + PySpark | PostgreSQL + dbt Core (free, open source) |
+| **Dashboard** | Databricks AI/BI | Apache Superset (open source, Kenya MOH-approved) |
+| **Semantic layer** | Unity Catalog Metric Views | dbt metrics layer (free tier) |
+| **Row-level security** | Unity Catalog row filter functions | PostgreSQL row security policies |
+| **Natural language querying** | Databricks Genie | Not yet cost-effective at county level |
+| **Orchestration** | Databricks Workflows | Apache Airflow (open source) |
+
+The SQL definitions, schema DDL, and data model in this repository are **platform-agnostic**. A county health team with a PostgreSQL instance and a data analyst could implement the Bronze → Silver → Gold pipeline and equivalent dashboards without any Databricks dependency. The governance and privacy framework — particularly the three-tier access control and the de-identification protocol — applies regardless of platform.
+
+For national-scale adoption through Kenya MOH, the recommended path is:
+1. **Pilot** — Run on Databricks Community Edition (free) with a single county's data to validate the model
+2. **Validate** — Complete a formal DPIA and data sharing agreement with the relevant CHMT
+3. **Scale** — Migrate to DHIS2's built-in analytics for counties without cloud infrastructure, retaining the star schema logic as the transformation layer
+
+> If you are a county government, NGO, or MOH department interested in adapting this platform, please open an issue or reach out directly. The data model and SQL definitions are freely available under the MIT license.
 
 ---
 
@@ -643,6 +629,7 @@ The dashboard implements **4 cascading filters** that propagate across all pages
 | **Data Governance** | Unity Catalog |
 | **Compute** | Serverless SQL Warehouse |
 | **Dashboard** | Databricks AI/BI (Lakeview) |
+| **Natural Language** | Databricks Genie |
 | **Security** | Row-Level Security via SQL UDFs |
 | **Privacy** | De-identification at Silver layer; aggregate-only Gold layer |
 | **Version Control** | Git (GitHub) |
