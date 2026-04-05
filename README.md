@@ -550,33 +550,33 @@ For national-scale adoption through Kenya MOH, the recommended path is:
 
 ## 🛣️ Roadmap & Future Directions
 
-This platform is designed as a living foundation that can evolve from county-level pilots to national-scale impact, while remaining adaptable to resource realities across Kenya's 47 counties.
+This platform is designed as a living foundation that can evolve from county-level pilots to broader impact, while remaining adaptable to the resource realities and national digitization priorities across Kenya.
 
-### Phase 1 — County Pilots & Validation (Q2–Q4 2026)
-- Expand live deployment to all 17 sub-counties in Busia and Kisumu with weekly data refreshes
-- Conduct formal **Data Protection Impact Assessment (DPIA)** and secure data-sharing agreements with County Health Management Teams
-- Pilot Genie AI natural language querying with 20+ real-world questions from sub-county officers and CHMTs
-- Gather user feedback on dashboard usability and integrate performance improvements
+### Phase 1 — County Pilots & Validation (2026)
+- Expand live deployment across all 17 sub-counties in Busia and Kisumu with weekly data refreshes from eCHIS
+- Complete a formal **Data Protection Impact Assessment (DPIA)** and establish data-sharing agreements with County Health Management Teams
+- Pilot and refine Genie AI natural language querying with real questions from sub-county officers and CHMT members
+- Collect structured user feedback on dashboards and iterate on usability and performance
 
 ### Phase 2 — Predictive & Prescriptive Analytics (2026–2027)
-- Add **defaulter risk scoring models** — predict mothers at high risk of dropping out of ANC using historical patterns
-- Introduce early-warning alerts for immunization gaps and low CHW productivity zones
-- Enable scenario modeling: *"What happens to Penta3 coverage if we add 10 more CHWs in Bunyala sub-county?"*
-- Integrate causal inference insights — estimating the impact of supervision frequency on CHW visit quality
+- Implement **defaulter risk scoring** to proactively identify mothers at high risk of dropping out of the ANC cascade
+- Add early-warning alerts for immunization gaps, low CHW productivity, and high-defaulter zones
+- Enable interactive scenario modeling (e.g., *"What is the projected impact on Penta3 coverage if we increase CHW density in Bunyala sub-county?"*)
+- Incorporate basic causal inference to quantify the effect of supervision frequency on visit quality and outcomes
 
-### Phase 3 — Broader Adoption & Interoperability (2027+)
-- Package a lightweight, platform-agnostic version using PostgreSQL + dbt + Apache Superset for counties without Databricks access
-- Develop integration pathways with **DHIS2** (Kenya's national health information system) and additional eCHIS modules
-- Support expansion to additional high-burden counties under national maternal and child health initiatives
-- Contribute reusable components (star schema, RLS patterns, de-identification protocol) as open resources for other African CHIS implementations
+### Phase 3 — Broader Adoption & Interoperability (2027 onward)
+- Release a lightweight, platform-agnostic version (PostgreSQL + dbt + Apache Superset) for counties without Databricks access
+- Build integration pathways with **DHIS2** and other national health information systems
+- Support rollout to additional high-burden counties aligned with national maternal, child, and community health priorities
+- Contribute reusable assets (star schema design, RLS patterns, de-identification protocol) as open resources for other African community health information systems
 
 ### Phase 4 — National & Regional Scale
-- Explore alignment with Kenya's next Community Health Strategy cycle and the national digitization agenda
-- Add multi-language support (Kiswahili + English) for broader accessibility across county health teams
-- Enable secure cross-county benchmarking while maintaining strict geographic row-level security
-- Investigate federated learning or privacy-preserving techniques for national-level insights without centralizing raw data
+- Align with Kenya’s evolving Community Health Strategy and national digital health agenda
+- Add multi-language support (Kiswahili + English) for wider accessibility
+- Enable secure, governed cross-county benchmarking while preserving strict geographic row-level security
+- Explore privacy-preserving techniques (e.g., federated approaches) for aggregated national insights without centralizing sensitive data
 
-**We welcome collaborators** — county governments, NGOs, developers, and researchers — to co-create these phases. Open an issue on GitHub or reach out directly if you would like to pilot, adapt, or extend the platform.
+**We welcome collaborators** — county governments, NGOs, developers, researchers, and partners — to help shape and scale these phases. Open an issue on GitHub or reach out directly if you would like to pilot, adapt, or extend the platform in your context.
 
 ---
 
