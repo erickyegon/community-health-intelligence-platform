@@ -669,7 +669,9 @@ The dashboard implements **4 cascading filters** that propagate across all pages
 [![Apache Spark](https://img.shields.io/badge/Apache%20Spark-E25A1C?style=flat-square&logo=apachespark&logoColor=white)](https://spark.apache.org)
 [![Delta Lake](https://img.shields.io/badge/Delta%20Lake-00ADD8?style=flat-square&logo=delta&logoColor=white)](https://delta.io)
 
-**[Erick Yegon](https://github.com/erickyegon)** · Data & Analytics Engineer
+**[Erick Kiprotich Yegon, PhD](https://github.com/erickyegon)** · AI & Data Science Consultant  
+17+ years · Global Health · Databricks · Causal Inference · EB-1A  
+[LinkedIn](https://linkedin.com/in/erickyegon) · [ORCID](https://orcid.org/0000-0002-7055-4848) · keyegon@gmail.com
 
 *Transforming Kenya's community health data into actionable intelligence — with privacy by design*
 
